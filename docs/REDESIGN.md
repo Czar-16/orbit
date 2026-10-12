@@ -19,3 +19,11 @@ Limits: no interactive browser available; no browser automation used. Manual vis
 Implementation follows Next.js next/font documentation (https://nextjs.org/docs/app/api-reference/components/font) and Tailwind 4 dark variant documentation (https://tailwindcss.com/docs/dark-mode), with the existing dependency versions inspected first.
 
 Pause after this phase for user approval, as AGENTS.md requires. Next: shared components and app shell, then screen phases.
+
+## Focused phase: Recent activity
+
+User requested improving the dashboard Recent activity panel after Phase 1. Replaced the plain stacked rows with a timeline: neutral connected markers, bold 16px job links, rounded 14px status pills, event kind/origin captions and semantic timestamps. Discovery runs use nested cards with recorded state/date/counts and error text. Empty and unavailable states have a dashed panel; the tracker link has a distinct footer. Dashboard columns align at the top, avoiding an unnecessarily stretched policy panel. Both themes use existing tokens; mobile spacing narrows and content wraps. Queries, ordering, number of visible records, navigation destinations, statuses and Asia/Kolkata timestamp values remain unchanged. No dependencies or new behaviors.
+
+Files: src/app/page.tsx, src/app/globals.css, appended activity-feed guidance in DESIGN.md, and this report. Pre-existing DESIGN.md changes remain uncommitted.
+
+Checks: npm run lint, npm run typecheck, npm test (173 passing tests), npm run build, git diff --check all passed. Local production dashboard HTTP 200; rendered activity rows had matching tracker links and semantic timestamps. Production server stopped after inspection. No new tests added for this reversible presentation change. No browser automation used. Visual appearance at 320px, 768px, and 1280px in both themes remains unverified without an interactive browser. The broader shared-component and screen redesign remains pending approval.

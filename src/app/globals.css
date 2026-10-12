@@ -495,3 +495,46 @@ body { font-variant-numeric: tabular-nums; }
 .theme-option { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--border-strong); border-radius: 10px; background: var(--surface-2); cursor: pointer; }
 .theme-option:has(:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-soft-text); }
 .theme-option input { accent-color: var(--accent); width: 20px; height: 20px; }
+
+/* Activity feeds use the same structure in either theme. */
+.dashboard-grid { align-items: start; }
+.activity-panel { padding: 22px; border-radius: 14px; }
+.activity-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.activity-heading-icon { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; color: var(--accent-soft-text); background: var(--accent-soft); }
+.activity-caption { font-size: 14px; color: var(--text-muted); margin-top: 4px; overflow-wrap: anywhere; }
+.activity-feed { list-style: none; padding: 0; margin: 0; }
+.activity-item { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; position: relative; }
+.activity-item:not(:last-child)::before { content: ""; position: absolute; left: 15px; top: 32px; bottom: 0; width: 1px; background: var(--border); }
+.activity-marker { display: grid; place-items: center; width: 32px; height: 32px; margin-top: 6px; border: 1px solid var(--border); border-radius: 99px; color: var(--text-muted); background: var(--surface-2); }
+.activity-entry { min-width: 0; padding: 0 0 16px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.activity-item:last-child .activity-entry { border-bottom: 0; margin-bottom: 0; }
+.activity-title-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
+.activity-job-link { display: inline-flex; align-items: center; gap: 8px; min-width: 0; min-height: 44px; font-size: 16px; font-weight: 700; color: var(--text); border-radius: 4px; }
+.activity-job-link span { overflow-wrap: anywhere; }
+.activity-job-link svg { flex-shrink: 0; color: var(--text-muted); }
+.activity-job-link:hover { color: var(--accent-text); text-decoration: underline; text-underline-offset: 4px; }
+.activity-title-row > span { font-size: 14px; font-weight: 700; border-radius: 99px; flex-shrink: 0; }
+.activity-description { font-size: 14px; color: var(--text-muted); overflow-wrap: anywhere; margin-top: 4px; }
+.activity-time { display: flex; align-items: baseline; gap: 8px; font-size: 14px; color: var(--text-muted); margin-top: 8px; overflow-wrap: anywhere; }
+.activity-time svg { flex-shrink: 0; align-self: center; }
+.activity-discovery { padding-top: 20px; border-top: 1px solid var(--border); }
+.activity-discovery h3 { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+.activity-discovery h3 svg { flex-shrink: 0; color: var(--text-muted); }
+.activity-run-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.activity-run { padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); min-width: 0; overflow-wrap: anywhere; }
+.activity-run-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 14px; }
+.activity-run-state { border: 1px solid var(--border-strong); border-radius: 99px; padding: 3px 10px; font-size: 14px; font-weight: 700; color: var(--text-label); background: var(--surface-3); }
+.activity-run-counts { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; color: var(--text-muted); margin-top: 12px; }
+.activity-run-counts strong { color: var(--text); }
+.activity-run-error { margin-top: 12px; font-size: 14px; color: var(--danger); }
+.activity-empty { padding: 20px 16px; border: 1px dashed var(--border-strong); border-radius: 10px; background: var(--surface-2); color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+.activity-footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border); }
+.activity-tracker-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--accent-text); font-size: 14px; font-weight: 700; }
+.activity-tracker-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.activity-tracker-link svg { flex-shrink: 0; }
+@media (max-width: 767px) {
+  .activity-panel { padding: 16px; }
+  .activity-item { grid-template-columns: 24px minmax(0, 1fr); gap: 8px; }
+  .activity-marker { width: 24px; height: 24px; margin-top: 10px; }
+  .activity-item:not(:last-child)::before { left: 11px; top: 34px; }
+}

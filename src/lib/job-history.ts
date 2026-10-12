@@ -5,13 +5,27 @@ export const sourceSnapshotSchema = z
   .object({
     identity: z.string().trim().min(1).max(300),
     label: z.string().trim().min(1).max(300),
-    kind: z.literal("MANUAL"),
+    kind: z.enum(["MANUAL", "OFFICIAL_API"]),
     evidence: evidenceSchema.refine(
-      (value) => value.provenance === "user-provided" && value.basis === "user",
+      (value) =>
+        (value.provenance === "user-provided" && value.basis === "user") ||
+        (value.provenance === "inferred" && value.basis === "official"),
       "Manual source identity must remain user-provided.",
     ),
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => {
+    if (
+      value.kind === "MANUAL"
+        ? value.evidence.provenance !== "user-provided"
+        : value.evidence.provenance !== "inferred" ||
+          value.evidence.basis !== "official"
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Source kind and evidence must agree.",
+      });
+  });
 
 export function captureManualSource(source: {
   identity: string;
@@ -31,7 +45,7 @@ export function readListingHistory(revision: {
   listingUrl: string | null;
   sourceSnapshot: unknown;
 }) {
-  if (revision.schemaVersion !== 2) return null;
+  if (![2, 3].includes(revision.schemaVersion)) return null;
   const source = sourceSnapshotSchema.safeParse(revision.sourceSnapshot);
   if (!source.success) return null;
   return { listingUrl: revision.listingUrl, source: source.data };

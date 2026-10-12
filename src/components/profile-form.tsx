@@ -18,6 +18,28 @@ const fields = [
   { key: "location", label: "Location", type: "text" },
   { key: "headline", label: "Professional headline", type: "text" },
   { key: "experience", label: "Employment and experience", type: "textarea" },
+  {
+    key: "experienceYears",
+    label:
+      "Confirmed years of professional experience (0–60; blank if unknown)",
+    type: "text",
+  },
+  {
+    key: "educationLevel",
+    label:
+      "Confirmed education level (none, secondary, bachelor, master, doctorate; blank if unknown)",
+    type: "text",
+  },
+  {
+    key: "absentSkills",
+    label: "Skills you explicitly confirm you do not have (comma-separated)",
+    type: "textarea",
+  },
+  {
+    key: "projects",
+    label: "Verified project bullets (one verbatim bullet per line)",
+    type: "textarea",
+  },
   { key: "education", label: "Education and certifications", type: "textarea" },
   { key: "desiredRoles", label: "Roles you want", type: "text" },
   {
@@ -83,11 +105,20 @@ export function ProfileForm({
                 provenance={
                   dirtyFields[field.key]
                     ? "user-provided"
-                    : field.key === "skills"
-                      ? facts.skills.length
+                    : ["skills", "absentSkills", "projects"].includes(field.key)
+                      ? (field.key === "skills"
+                          ? facts.skills
+                          : field.key === "absentSkills"
+                            ? facts.absentSkills
+                            : facts.projects
+                        ).length
                         ? "verified"
                         : "unknown"
-                      : facts[field.key].evidence.provenance
+                      : field.key !== "skills" &&
+                          field.key !== "absentSkills" &&
+                          field.key !== "projects"
+                        ? facts[field.key].evidence.provenance
+                        : "unknown"
                 }
               />
             </label>

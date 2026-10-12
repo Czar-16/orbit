@@ -11,6 +11,13 @@ import { JobCard } from "@/components/job-card";
 import { JobImportForm } from "@/components/job-import-form";
 import { ProvenanceBadge } from "@/components/provenance-badge";
 import { JobRevisionHistory } from "@/components/job-revision-history";
+import { RequirementReview } from "@/components/requirement-review";
+import { getPreferences } from "@/lib/preference-service";
+import {
+  weightedMatch,
+  weightedJobFromRevision,
+} from "@/lib/weighted-matching";
+import { analyzeRequirements } from "@/lib/requirement-analysis";
 export const metadata: Metadata = { title: "Inspect job" };
 export const dynamic = "force-dynamic";
 export default async function Page({
@@ -41,6 +48,7 @@ export default async function Page({
   });
   const facts = profile ? profileFactsSchema.parse(profile.facts) : null;
   const revision = job.latestRevision;
+  const preferences = await getPreferences();
   const evidence = jobEvidenceSchema.parse(revision.provenance);
   const history = await database.jobRevision.findMany({
     where: { workspaceId, jobId: job.id },
@@ -70,8 +78,22 @@ export default async function Page({
           revision,
           evidence,
           match: matchSkills(revision.skills, facts),
+          weighted: weightedMatch(
+            weightedJobFromRevision(revision),
+            facts,
+            preferences.values,
+          ),
           profileRevision: profile?.revision ?? null,
         }}
+      />
+      <RequirementReview
+        analysis={analyzeRequirements(
+          {
+            description: revision.description,
+            experienceRequirement: revision.experienceRequirement,
+          },
+          facts,
+        )}
       />
       <section className="panel mt-4">
         <h2 className="mb-4 flex flex-wrap items-center gap-2">

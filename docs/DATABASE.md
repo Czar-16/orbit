@@ -35,3 +35,9 @@ References: [Prisma 7 generator](https://www.prisma.io/docs/orm/v7/prisma-client
 Apply with `npm run db:setup` for the dedicated Orbit Compose database; restart an existing app to load the regenerated Prisma client. Integration coverage also replays the old migrations in a transaction-isolated test schema, creates a real legacy record, then verifies the upgrade preserves all existing fields while leaving snapshots unknown.
 
 The SQL column/default changes were generated with the installed Prisma 7.10.0 `migrate diff --from-schema --to-schema --script --output` workflow from the [Prisma v7 CLI documentation](https://www.prisma.io/docs/cli/v7/migrate/diff); custom constraints were added explicitly.
+
+## Weighted matching and discovery
+
+Migration 202610120006 adds Workspace-owned PreferenceVersion and WeightedMatch. Workspace-scoped foreign keys pin weighted explanations to immutable job/profile/preference versions without altering old skills-only MatchResult. Profile JSON optional fields for experienceYears, educationLevel, absentSkills and projects parse older records as unknown/empty and require explicit personal verification.
+
+Migration 202610120007 adds DiscoveryRun with unique workspace/source/Kolkata-day attempts, source provider/company filters and soft removal, and a stable Job.processedRelevant admission marker. Source policy constraints still require an allowed decision, reviewed terms, and endpoint before enabling an official API. API listing revisions use schemaVersion 3 with Inferred/official evidence; manual revision 2 and legacy unknown revision 1 remain readable. Discovery reserves attempts and enforces quotas under a workspace lock, then fetches outside the transaction; job ingestion and daily capacity checks are atomic under the same lock. Crashed running attempts remain recorded and are not automatically retried that day, favoring quota safety. No application status or submission model exists yet.

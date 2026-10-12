@@ -22,6 +22,23 @@ describe("explicit profile verification", () => {
       }).skills,
     ).toBe(skills);
   });
+  it("rejects fractional experience above the limit and contradictory skill aliases", () => {
+    expect(
+      profileInputSchema.safeParse({
+        ...profileDefaults(),
+        confirmed: true,
+        experienceYears: "60.1",
+      }).success,
+    ).toBe(false);
+    expect(
+      profileInputSchema.safeParse({
+        ...profileDefaults(),
+        confirmed: true,
+        skills: "JS",
+        absentSkills: "JavaScript",
+      }).success,
+    ).toBe(false);
+  });
   it("requires user confirmation", () => {
     expect(profileInputSchema.safeParse(profileDefaults()).success).toBe(false);
   });

@@ -17,8 +17,8 @@ export function JobFilters({
           { key: "company", label: "Company" },
           { key: "location", label: "Location" },
           { key: "source", label: "Source" },
-          { key: "minScore", label: "Minimum skills score" },
-          { key: "maxScore", label: "Maximum skills score" },
+          { key: "minScore", label: "Minimum weighted score" },
+          { key: "maxScore", label: "Maximum weighted score" },
           { key: "from", label: "Discovered from" },
           { key: "to", label: "Discovered through" },
         ].map((field) => (
@@ -74,7 +74,7 @@ export function JobFilters({
           >
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
-            <option value="score">Skills score</option>
+            <option value="score">Weighted score</option>
             <option value="company">Company</option>
           </select>
         </div>

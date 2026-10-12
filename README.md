@@ -1,6 +1,6 @@
 # Orbit
 
-Local job application workspace, implemented through Phase 4. Seven main pages provide private resumes, user-verified profiles, manual job intake, saved jobs, and deterministic skills matching. Application preparation, application tracking, background runs, AI, and external integrations remain unavailable.
+Local job application workspace through Phase 5. Private resumes, user-verified profiles, manual intake, seven-category deterministic matching, editable preferences, saved jobs, and permitted public-API discovery work locally without an AI key. Application preparation (Phase 6), tracking (Phase 7), and scheduling (Phase 8) remain unavailable.
 
 ## Setup
 
@@ -31,7 +31,10 @@ Both app scripts bind to 127.0.0.1. No authentication is implemented; add real a
 2. In Discover jobs, paste a public HTTPS URL, a description, or both; enter known employer-stated fields. URLs are validated through scheme/host/address checks, but listing pages are never fetched. A link-only import keeps unknown fields unknown.
 3. Import a CSV or JSON list of up to 50 jobs and 1 MB. All rows validate before any write. Exact URL duplicates preserve existing records; description-only entries stay independent. See [manual intake and matching](docs/INTAKE.md).
 4. Save, unsave, dismiss, archive, restore, inspect, and edit jobs. Edits create revisions with listing URL/source snapshots; older revisions show unknown listing history. Filters, sorting, and pagination persist in the URL; date filters and dashboard today use Asia/Kolkata.
-5. Skills coverage compares supplied job requirements against explicitly verified profile skills. It works without AI, explains missing/unverified skills, and leaves unknown inputs unscored. Scores do not assess experience, salary, eligibility, or employer accuracy. Matches are pinned to job/profile revisions; list display recalculates against your latest profile.
+5. In Settings, save matching preferences and weights. Seven categories use confirmed points out of 100 with visible unknown weight and a possible upper bound; missing information is never rescaled into a match. Explicit numeric experience, education level, absent skills, and verbatim project bullets require your confirmation in Profile. Match history pins job/profile/preference revisions. Skills coverage remains separately labeled.
+6. Inspect a job to review mandatory/preferred/unclear wording and hard-filter flags. Missing skill confirmation never proves absence; preferred Java never rejects and undisclosed salary remains unknown.
+7. Use **Run discovery now** for permitted Himalayas/Remotive/Jobicy/Remote OK public APIs. Settings allows source toggles and tracked company filters. Each query runs once per Kolkata day with four requests/provider/day and 31-second spacing. New relevant jobs share the configurable daily cap with manual intake. See [source permission review](docs/SOURCES.md). No listing page is fetched.
+8. Review Today’s best matches, Save/Dismiss jobs, and open the exact returned original listing to apply manually. Preparation arrives in Phase 6; this never marks Applied.
 
 Nothing is submitted. Open original listing is a normal user-controlled link. Prepare application and Run now remain disabled with explanations.
 
@@ -59,7 +62,7 @@ Manual visual/keyboard inspection was not performed in this tool session. DOM an
 
 ## Limits
 
-PDF/TXT only; no DOCX parsing or automatic resume/job extraction. No resume removal/redaction UI yet. CSV and JSON imports support the documented fields. Lists sort and score-filter within the 1,000 most recent records matching database filters; recording matches handles up to 200 recent unarchived jobs. Missing job/profile information requires your input. Application preparation/tracking, authorized submissions, public API/feed intake, Inngest runs, and AI are future work.
+PDF/TXT only; no DOCX parsing or automatic resume extraction. Requirement classification uses a bounded English rule vocabulary. No resume removal/redaction UI yet. CSV and JSON imports support the documented fields. Lists sort and score-filter within the 1,000 most recent records matching database filters; recording matches handles up to 200 recent unarchived jobs. Missing job/profile information requires your input. Application preparation/tracking, authorized submissions, Inngest runs, and AI remain future work. Discovery currently requests only the first 20 records per query. ATS board ingestion and credentialed Adzuna/Jooble adapters remain disabled where permission/configuration is unresolved. Unknown salary fields, unsupported pay periods and free-form Remotive salary text are not guessed.
 
 Production dependencies audit clean. Five high-severity entries remain in the development lint chain (eslint-config-next → Next lint plugin → fast-glob → micromatch → braces); npm has no compatible patch. ESLint 9.39.5 remains required by current plugin peer ranges despite its deprecation. Scoped Prisma-tooling overrides are explained in docs/DATABASE.md and verified through real generation/migration tests.
 
@@ -75,4 +78,4 @@ Production dependencies audit clean. Five high-severity entries remain in the de
 - `prisma`: schema and migrations; `scripts`: local setup/disposable tests.
 - `tests`: unit/DOM and real database checks.
 
-DESIGN.md remains the AMOLED UI contract. AGENTS.md remains the compliance/truth/security contract. The user authorized continuous work through Phase 4 and commit/push after each phase. Recent continuations fix profile reopening, add CSV intake, and preserve listing history; see [PROMPT alignment](docs/PROMPT-ALIGNMENT.md). Work stops after each phase report for approval.
+DESIGN.md remains the AMOLED UI contract. AGENTS.md remains the compliance/truth/security contract. Latest user instructions authorize continuing through Phase 6 without approval waits, using permitted public APIs, pushing after each completed phase, and starting each new phase in a fresh Codex task. Model/source decisions and phase checks remain documented. See [Phase 4 report](docs/PHASE-4-WEIGHTED-REPORT.md), [Phase 5 report](docs/PHASE-5-REPORT.md), and [next-context handoff](docs/NEXT-CONTEXT.md).

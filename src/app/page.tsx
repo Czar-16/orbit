@@ -2,6 +2,9 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck, Database } from "lucide-react";
 import { databaseStatus, requireWorkspace } from "@/lib/db";
 import { todayInterval } from "@/lib/time";
+import { queryJobs } from "@/lib/job-query";
+import { defaultFilters } from "@/lib/job-filters";
+import { JobCard } from "@/components/job-card";
 import { Unavailable } from "@/components/unavailable";
 export const dynamic = "force-dynamic";
 export default async function Dashboard() {
@@ -30,11 +33,21 @@ export default async function Dashboard() {
       savedJobs = null;
     }
   }
+  const best =
+    status.state === "ready"
+      ? await queryJobs({
+          ...defaultFilters,
+          sort: "score",
+          from: new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Asia/Kolkata",
+          }).format(new Date()),
+        })
+      : null;
   const metrics = [
     {
       label: "Jobs imported today",
       value: importedToday,
-      caption: "Manual intake recorded today in Asia/Kolkata.",
+      caption: "Manual/API intake recorded today in Asia/Kolkata.",
     },
     {
       label: "Saved jobs",
@@ -87,6 +100,22 @@ export default async function Dashboard() {
           </article>
         ))}
       </section>
+      {best && (
+        <section className="mb-4">
+          <h2 className="mb-4">Today’s best matches</h2>
+          {best.entries.length ? (
+            <div className="space-y-4">
+              {best.entries.slice(0, 10).map((entry) => (
+                <JobCard key={entry.job.id} entry={entry} />
+              ))}
+            </div>
+          ) : (
+            <p className="panel text-text-muted">
+              No jobs imported today. Run permitted discovery or import a job.
+            </p>
+          )}
+        </section>
+      )}
       <div className="dashboard-grid">
         <Unavailable
           title="Application activity is unavailable"

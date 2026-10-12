@@ -32,7 +32,7 @@ export async function JobList({
         <p className="text-sm text-text-muted">
           {result.total} jobs match these filters.
           {result.truncated &&
-            " Results are limited to the 1,000 most recent records before sorting and skill-score filtering."}
+            " Results are limited to the 1,000 most recent records before sorting and weighted-score filtering."}
         </p>
         <RefreshMatches />
       </div>

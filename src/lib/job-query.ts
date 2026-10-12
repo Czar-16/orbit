@@ -5,6 +5,11 @@ import { type JobFilters } from "@/lib/job-filters";
 import { profileFactsSchema } from "@/lib/profile-schema";
 import { jobEvidenceSchema } from "@/lib/job-evidence";
 import { matchSkills } from "@/lib/matching";
+import { getPreferences } from "@/lib/preference-service";
+import {
+  weightedMatch,
+  weightedJobFromRevision,
+} from "@/lib/weighted-matching";
 import { jobInputSchema } from "@/lib/job-input";
 export type JobWithRevision = Prisma.JobGetPayload<{
   include: { latestRevision: true; source: true };
@@ -36,6 +41,7 @@ export async function queryJobs(filters: JobFilters, savedOnly = false) {
     where: { workspaceId },
     orderBy: { revision: "desc" },
   });
+  const preferences = await getPreferences();
   const facts = profile ? profileFactsSchema.parse(profile.facts) : null;
   const where: Prisma.JobWhereInput = {
     workspaceId,
@@ -101,6 +107,11 @@ export async function queryJobs(filters: JobFilters, savedOnly = false) {
         revision,
         evidence: jobEvidenceSchema.parse(revision.provenance),
         match,
+        weighted: weightedMatch(
+          weightedJobFromRevision(revision),
+          facts,
+          preferences.values,
+        ),
         profileRevision: profile?.revision ?? null,
       },
     ];
@@ -108,13 +119,15 @@ export async function queryJobs(filters: JobFilters, savedOnly = false) {
   const filtered = bounded.filter(
     (entry) =>
       !(filters.minScore || filters.maxScore) ||
-      (entry.match.score !== null &&
-        (!filters.minScore || entry.match.score >= Number(filters.minScore)) &&
-        (!filters.maxScore || entry.match.score <= Number(filters.maxScore))),
+      (entry.weighted.score !== null &&
+        (!filters.minScore ||
+          entry.weighted.score >= Number(filters.minScore)) &&
+        (!filters.maxScore ||
+          entry.weighted.score <= Number(filters.maxScore))),
   );
   filtered.sort((a, b) =>
     filters.sort === "score"
-      ? (b.match.score ?? -1) - (a.match.score ?? -1)
+      ? (b.weighted.score ?? -1) - (a.weighted.score ?? -1)
       : filters.sort === "company"
         ? (a.revision.company ?? "").localeCompare(b.revision.company ?? "")
         : filters.sort === "oldest"

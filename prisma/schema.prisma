@@ -32,6 +32,9 @@ model Workspace {
   jobs Job[]
   revisions JobRevision[]
   matches MatchResult[]
+  preferences PreferenceVersion[]
+  weightedMatches WeightedMatch[]
+  discoveryRuns DiscoveryRun[]
 }
 model ResumeVersion {
   id String @id @default(uuid()) @db.Uuid
@@ -57,6 +60,7 @@ model ProfileVersion {
   facts Json @db.JsonB
   resumeVersionId String? @db.Uuid
   matches MatchResult[]
+  weightedMatches WeightedMatch[]
   resume ResumeVersion? @relation(fields: [workspaceId, resumeVersionId], references: [workspaceId, id], onDelete: Restrict)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   @@unique([workspaceId, revision])
@@ -77,6 +81,10 @@ model Source {
   enabled Boolean @default(false)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   jobs Job[]
+  provider String?
+  companyQuery String?
+  removedAt DateTime? @db.Timestamptz(3)
+  runs DiscoveryRun[]
   @@unique([workspaceId, identity])
   @@unique([workspaceId, id])
 }
@@ -89,6 +97,7 @@ model Job {
   externalId String?
   listingUrl String?
   urlHash String?
+  processedRelevant Boolean @default(false)
   discoveredAt DateTime @default(now()) @db.Timestamptz(3)
   savedAt DateTime? @db.Timestamptz(3)
   dismissedAt DateTime? @db.Timestamptz(3)
@@ -111,6 +120,7 @@ model JobRevision {
   jobId String @db.Uuid
   job Job @relation("JobHistory", fields: [workspaceId, jobId], references: [workspaceId, id], onDelete: Restrict)
   matches MatchResult[]
+  weightedMatches WeightedMatch[]
   latestFor Job[] @relation("LatestRevision")
   revision Int
   schemaVersion Int @default(2)
@@ -154,4 +164,52 @@ model MatchResult {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   @@unique([workspaceId, jobRevisionId, profileVersionId, ruleVersion])
   @@index([workspaceId, createdAt])
+}
+
+model PreferenceVersion {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  revision Int
+  values Json @db.JsonB
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  matches WeightedMatch[]
+  @@unique([workspaceId, revision])
+  @@unique([workspaceId, id])
+}
+model WeightedMatch {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  jobRevisionId String @db.Uuid
+  jobRevision JobRevision @relation(fields: [workspaceId, jobRevisionId], references: [workspaceId, id], onDelete: Restrict)
+  profileVersionId String @db.Uuid
+  profileVersion ProfileVersion @relation(fields: [workspaceId, profileVersionId], references: [workspaceId, id], onDelete: Restrict)
+  preferenceVersionId String @db.Uuid
+  preferenceVersion PreferenceVersion @relation(fields: [workspaceId, preferenceVersionId], references: [workspaceId, id], onDelete: Restrict)
+  ruleVersion String
+  score Int?
+  explanation Json @db.JsonB
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([workspaceId, jobRevisionId, profileVersionId, preferenceVersionId, ruleVersion])
+  @@index([workspaceId, createdAt])
+}
+
+model DiscoveryRun {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  sourceId String @db.Uuid
+  source Source @relation(fields: [workspaceId, sourceId], references: [workspaceId, id], onDelete: Restrict)
+  provider String
+  day String @db.VarChar(10)
+  state String
+  fetched Int @default(0)
+  imported Int @default(0)
+  duplicates Int @default(0)
+  error String?
+  startedAt DateTime @default(now()) @db.Timestamptz(3)
+  finishedAt DateTime? @db.Timestamptz(3)
+  @@unique([workspaceId, sourceId, day])
+  @@index([workspaceId, provider, day])
 }

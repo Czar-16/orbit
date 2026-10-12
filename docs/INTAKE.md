@@ -1,6 +1,6 @@
 # Manual intake and deterministic matching
 
-Phase 4 enables local manual imports only. No job page is fetched, no Apply action is automated, and no submission integration exists.
+Phase 4 supports manual intake/matching; Phase 5 adds four permitted public API adapters. No job page is fetched, no Apply action is automated, and no submission integration exists.
 
 ## Input
 
@@ -25,9 +25,9 @@ LinkedIn/Indeed origins receive manual-only Source records with enabled=false. O
 
 Saved jobs includes active saved records. Dismiss and Archive ask for confirmation, remove the job from active/saved lists, and can be reversed through the corresponding Discover status filter. Restore does not automatically restore the previous saved flag; explicitly Save job again if desired. No job-state action changes application status.
 
-Filters cover role, company, location, source, status, skills-score range, and discovered dates; sorting supports newest, oldest, company, and skills score. State stays in the query string, with 20 cards per page. Lists cap database-filtered candidates at 1,000 recent records before skills filtering/sorting and clearly disclose truncation. Invalid filters show an error and default filters. Unknown scores are excluded from numeric score ranges. Dates are Asia/Kolkata calendar dates.
+Filters cover role, company, location, source, status, weighted-score range, and discovered dates; sorting supports newest, oldest, company, and weighted score. State stays in the query string, with 20 cards per page. Lists cap database-filtered candidates at 1,000 recent records before weighted filtering/sorting and clearly disclose truncation. Invalid filters show an error and default filters. Unknown scores are excluded from numeric score ranges. Dates are Asia/Kolkata calendar dates.
 
-Inspect shows supplied data, the latest description, and revision history. New revisions (schemaVersion 2) preserve the supplied listing URL and a source identity/label snapshot, with User-provided provenance. History shows these values per revision even after URL removal or source-label changes. Older schemaVersion 1 revisions display historical listing identity as Unknown; current URLs are never copied backward into old history. Editing creates a new immutable revision and pins a new match; stale-tab edits are rejected. Matching/import history does not create an application or Applied event.
+Inspect shows supplied data, the latest description, and revision history. New manual revisions (schemaVersion 2) preserve the supplied listing URL and a source identity/label snapshot, with User-provided provenance. History shows these values per revision even after URL removal or source-label changes. Older schemaVersion 1 revisions display historical listing identity as Unknown; current URLs are never copied backward into old history. Editing creates a new immutable revision and pins a new match; stale-tab edits are rejected. Matching/import history does not create an application or Applied event.
 
 ## Skills coverage
 
@@ -41,4 +41,14 @@ MatchResult pins the exact job and profile revisions plus rule version, bounded 
 
 Manual browser layout and keyboard checks remain outstanding. Local HTTP checks and disposable PostgreSQL tests passed. Invalid job detail IDs render the not-found UI; Next.js streamed not-found responses may carry HTTP 200 after headers have streamed, while invalid resume IDs and unknown top-level paths return 404. No browser automation was used.
 
-No automatic requirement extraction, AI calls, application preparation/tracking, source integrations, or Inngest execution is enabled. Prepare application and Run now remain disabled with accessible explanations.
+## Weighted scoring and public discovery
+
+Weighted-v1 uses seven configurable categories and immutable preference versions. Scores are confirmed weighted points out of 100; unknown weights remain unknown with an upper bound, never renormalized. The role category combines title keywords and responsibility-verb overlap against verified profile text. Explicit confirmed experience years, education level and absent skills can support conflict flags; unconfirmed skills cannot. Detailed category explanations and flags appear on each card. WeightedMatch history pins job/profile/preference versions and leaves old skills-only MatchResult rows unchanged.
+
+Run discovery now calls only reviewed Himalayas, Remotive, Jobicy and Remote OK public APIs. API revisions use schemaVersion 3, PERMITTED_API, official-interface evidence labeled Inferred, source snapshots, and exact returned application URLs. Job descriptions, including HTML, remain untrusted inert text. API responses use Zod, bounded HTTPS fetches, fixed host allowlists, validated public DNS, pinned IP connections and redirect refusal. Local selected jobs are cached in immutable revisions; raw responses are not archived. See SOURCES.md for source-specific permissions, attribution, limits and disabled candidates.
+
+Daily limit defaults to 20 newly admitted relevant jobs (Asia/Kolkata), shared with manual jobs whose titles match configured roles. Existing records/edits/duplicates do not consume the limit again. Manual batches exceeding the cap roll back; API intake admits only remaining capacity. A job's processedRelevant marker records admission and is not cleared by dismissal/archive. Existing jobs predating this feature are not backfilled as today's processing. Each API query has one persistent attempt/day, success or failure; providers cap at four requests/day with 31-second spacing. A later Run Now may process company queries skipped for spacing. Restarting does not reset quota. Company queries are supported through Himalayas companySlug and Remotive company_name, not unapproved ATS endpoints.
+
+AI calls, application preparation/tracking and Inngest execution are not yet enabled. Prepare application stays disabled. Scheduled/catch-up discovery arrives in Phase 8; currently Run Now performs discovery without manual job searching. Manual import remains the working fallback for all skipped sources. A real sync on 2026-10-12 returned 20 Himalayas and 15 Remotive records plus 20 Jobicy and 20 Remote OK records, and imported 9 relevant jobs total. Profile facts were not seeded or modified by the sync.
+
+For an explicit operational check against the real permitted interfaces: `NODE_OPTIONS=--conditions=react-server npx tsx scripts/discovery-check.ts`. This writes real selected jobs and run history to your configured local database, consumes the same quotas, and never submits applications. Automated tests use separate disposable PostgreSQL and synthetic protocol fixtures.

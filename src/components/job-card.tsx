@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ExternalLink, CircleHelp } from "lucide-react";
 import { type JobEntry } from "@/lib/job-query";
+import { localDate } from "@/lib/time";
 import { scoreBand } from "@/lib/matching";
 import { JobActions } from "@/components/job-actions";
 import { ProvenanceBadge } from "@/components/provenance-badge";
@@ -12,8 +13,11 @@ export function JobCard({
   entry: JobEntry;
   inspect?: boolean;
 }) {
-  const { job, revision, evidence, match } = entry;
-  const band = match.score === null ? null : scoreBand(match.score);
+  const { job, revision, evidence, match, weighted } = entry;
+  const band =
+    weighted.score === null
+      ? null
+      : scoreBand(weighted.score ?? match.score ?? 0);
   const status = job.archivedAt
     ? "Archived"
     : job.dismissedAt
@@ -61,13 +65,13 @@ export function JobCard({
           title="Prioritization aid, not a guarantee."
           className="rounded-md border border-border bg-surface-2 px-3 py-2"
         >
-          <p className="text-xs text-text-muted">Skills coverage</p>
+          <p className="text-xs text-text-muted">Weighted prioritization</p>
           <p className={`font-mono text-sm ${band?.tone ?? "text-text-muted"}`}>
-            {match.score === null
+            {weighted.score === null
               ? "Unavailable"
-              : `${match.score} · ${band?.label}`}
+              : `${weighted.score} · ${band?.label}`}
           </p>
-          {match.score !== null && (
+          {weighted.score !== null && (
             <span className="text-xs text-text-muted">Inferred by rules</span>
           )}
         </div>
@@ -139,7 +143,39 @@ export function JobCard({
           <p className="text-sm text-text-muted">Needs your input.</p>
         )}
       </div>
+      <details className="mt-4 text-sm">
+        <summary className="min-h-11 cursor-pointer">
+          Weighted explanation · {weighted.evaluatedWeight}/100 weight evaluated
+        </summary>
+        <p className="mb-3 text-text-muted">
+          {100 - weighted.evaluatedWeight} weight unknown; possible upper bound{" "}
+          {weighted.upperBound}. Rule inference from supplied facts and
+          preferences; not employer verification.
+        </p>
+        <ul className="space-y-2">
+          {weighted.categories.map((c) => (
+            <li key={c.category}>
+              <span>
+                {c.category}: {Math.round(c.points * 10) / 10}/{c.weight} ·{" "}
+                {c.status} · {Math.round(c.unknownWeight * 10) / 10} weight
+                unknown
+              </span>
+              <p className="text-xs text-text-muted">{c.explanation}</p>
+            </li>
+          ))}
+        </ul>
+        {weighted.flags.map((f, i) => (
+          <p className="mt-2 text-warning" key={i}>
+            {f.status === "conflict" ? "Hard-filter flag" : "Needs review"}:{" "}
+            {f.explanation}
+          </p>
+        ))}
+      </details>
       <div className="mt-4 space-y-2 text-sm">
+        <p className="text-text-muted">
+          Separate skills coverage:{" "}
+          {match.score === null ? "Unavailable" : `${match.score}%`}
+        </p>
         {match.reason ? (
           <p className="flex items-start gap-2 text-text-muted">
             <CircleHelp
@@ -188,7 +224,54 @@ export function JobCard({
           {status}
         </span>
         <span className="text-text-muted">Source: {job.source.label}</span>
-        <ProvenanceBadge provenance="user-provided" />
+        <ProvenanceBadge
+          provenance={
+            job.source.kind === "MANUAL" ? "user-provided" : "inferred"
+          }
+        />
+        {job.source.provider === "himalayas" && (
+          <a
+            className="inline-flex min-h-11 items-center underline"
+            href="https://himalayas.app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Himalayas
+          </a>
+        )}
+        {job.source.provider === "remotive" && (
+          <a
+            className="inline-flex min-h-11 items-center underline"
+            href="https://remotive.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Remotive
+          </a>
+        )}
+        {job.source.provider === "jobicy" && (
+          <a
+            className="inline-flex min-h-11 items-center underline"
+            href="https://jobicy.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Jobicy
+          </a>
+        )}
+        {job.source.provider === "remoteok" && (
+          <a
+            className="inline-flex min-h-11 items-center underline"
+            href="https://remoteok.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Remote OK
+          </a>
+        )}
+        {localDate(job.discoveredAt) === localDate() && (
+          <span className="text-info">New today</span>
+        )}
         <span className="text-text-muted">
           {new Intl.DateTimeFormat("en-IN", {
             timeZone: "Asia/Kolkata",

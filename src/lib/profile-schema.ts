@@ -33,6 +33,16 @@ export const profileFactsSchema = z
     education: factSchema,
     desiredRoles: factSchema,
     skills: z.array(factSchema).max(100),
+    experienceYears: factSchema.default(() => ({
+      value: null,
+      evidence: unknownEvidence(),
+    })),
+    educationLevel: factSchema.default(() => ({
+      value: null,
+      evidence: unknownEvidence(),
+    })),
+    absentSkills: z.array(factSchema).max(100).default([]),
+    projects: z.array(factSchema).max(30).default([]),
   })
   .strict();
 export type ProfileFacts = z.infer<typeof profileFactsSchema>;
@@ -47,5 +57,9 @@ export function emptyProfile(): ProfileFacts {
     education: empty(),
     desiredRoles: empty(),
     skills: [],
+    experienceYears: empty(),
+    educationLevel: empty(),
+    absentSkills: [],
+    projects: [],
   };
 }

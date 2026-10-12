@@ -1,0 +1,13 @@
+# Phase 4 weighted matching report
+
+Completed 2026-10-12 under the user's instruction to continue without approval waits through Phase 6.
+
+Implemented seven weighted categories, editable versioned preferences, category-level points and unknown weight, matched/unconfirmed skills, supported hard-filter conflict/review flags, and immutable match links to job/profile/preference versions. Profile editor supports explicitly confirmed numeric experience, education level, absent skills, and verbatim project bullets. Older profile facts stay unknown. Scores are confirmed points out of 100; unknown categories are not rescaled into matches. Role/responsibility uses title keywords and responsibility-verb overlap, labeled as rule inference. Preferred Java never rejects; lack of Java confirmation never proves absence. Salary remains unknown when undisclosed or incomparable.
+
+Files: prisma/schema.prisma, prisma/migrations/202610120006_weighted_matching/migration.sql; src/lib/{preferences,preference-service,weighted-matching,profile-schema,profile-input,job-service,job-query}.ts; src/components/{preference-form,profile-form,job-card,job-filters,job-list}.tsx; src/app/settings/{page.tsx,actions.ts}; src/app/discover/[id]/page.tsx; tests/weighted-matching.test.ts; tests/db/weighted.test.ts; docs/PHASE-4-MODEL.md and this report. The earlier supplementary review files remain included in the workspace.
+
+Checks: npm run lint passed; npm run typecheck passed; npm test passed (132 tests / 16 files); npm run test:db passed (27 tests / 5 files in disposable PostgreSQL); npm run build passed; formatting used pinned Prettier 3.9.10. npm run db:setup deployed the tested matching migration to the guarded dedicated Orbit local database. No normal-database fixture or personal-fact writes occurred. Existing skills-only match history is preserved.
+
+Limits: rule-based English vocabulary and lexical responsibility matching; job information is supplied/inferred, not employer verified. Closed/expired listings cannot be treated as verified without a trustworthy official field; duplicate intake already skips existing exact URLs. Display recalculates current weighted results; persistence requires saved preferences. Visual acceptance remains outstanding. Architecture/model decisions preceded implementation in PHASE-4-MODEL.md.
+
+The app is usable for manual import, explainable scoring, and saving without AI. Next: Phase 5 permitted discovery, source health/quotas, tracked-company controls, daily limits, and a real permitted-interface check. Continue without an approval wait per the user's override.

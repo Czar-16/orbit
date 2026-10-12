@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 import { databaseStatus } from "@/lib/db";
+import { discoveryState } from "@/lib/discovery-service";
+import { DiscoveryControls } from "@/components/discovery-controls";
+import { getPreferences } from "@/lib/preference-service";
+import { PreferenceForm } from "@/components/preference-form";
 import { Monitor, Database, KeyRound, Clock3 } from "lucide-react";
 export const metadata: Metadata = { title: "Settings" };
 export const dynamic = "force-dynamic";
 export default async function Settings() {
   const status = await databaseStatus();
+  const discovery = status.state === "ready" ? await discoveryState() : null;
+  const preferences = status.state === "ready" ? await getPreferences() : null;
   return (
     <>
       <div className="page-heading">
@@ -56,14 +62,26 @@ export default async function Settings() {
           ))}
         </dl>
       </section>
-      <section className="panel mt-4">
-        <h2>Source availability</h2>
-        <p className="mt-2 text-sm text-text-muted">
-          No external sources or submission integrations are enabled. Source
-          terms must be reviewed and recorded before enabling a supported public
-          API or feed.
-        </p>
-      </section>
+      {preferences && (
+        <section className="panel mt-4">
+          <h2 className="mb-4">Matching preferences</h2>
+          <PreferenceForm
+            key={preferences.version?.id ?? "defaults"}
+            values={preferences.values}
+            revision={preferences.version?.revision ?? 0}
+          />
+        </section>
+      )}
+      {discovery && (
+        <div className="mt-4">
+          <DiscoveryControls
+            settings
+            sources={discovery.sources}
+            processed={discovery.processed}
+            limit={discovery.preferences.dailyLimit}
+          />
+        </div>
+      )}
     </>
   );
 }

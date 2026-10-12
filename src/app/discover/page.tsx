@@ -3,6 +3,8 @@ import { databaseStatus } from "@/lib/db";
 import { Unavailable } from "@/components/unavailable";
 import { JobImportForm } from "@/components/job-import-form";
 import { JobFileImport } from "@/components/job-file-import";
+import { discoveryState } from "@/lib/discovery-service";
+import { DiscoveryControls } from "@/components/discovery-controls";
 import { JobList } from "@/components/job-list";
 export const metadata: Metadata = { title: "Discover jobs" };
 export const dynamic = "force-dynamic";
@@ -12,12 +14,13 @@ export default async function Page({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const status = await databaseStatus();
+  const discovery = status.state === "ready" ? await discoveryState() : null;
   return (
     <>
       <div className="page-heading">
         <h1>Discover jobs</h1>
         <p>
-          Manual intake from links, descriptions, or files. No listing pages are
+          Permitted public APIs and manual intake. Listing pages are never
           fetched.
         </p>
       </div>
@@ -29,6 +32,13 @@ export default async function Page({
         />
       ) : (
         <>
+          {discovery && (
+            <DiscoveryControls
+              sources={discovery.sources}
+              processed={discovery.processed}
+              limit={discovery.preferences.dailyLimit}
+            />
+          )}
           <section id="import" className="panel mb-4 scroll-mt-4">
             <h2 className="mb-4">Import a job</h2>
             <JobImportForm />
@@ -37,7 +47,7 @@ export default async function Page({
             <h2 className="mb-4">Import a file</h2>
             <JobFileImport />
           </section>
-          <JobList params={await searchParams} />
+          <JobList params={{ sort: "score", ...(await searchParams) }} />
         </>
       )}
     </>

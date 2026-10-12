@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+.env*
+!.env.example
+*.pem
+*.key
+*.log
+private/
+uploads/
+resumes/
+*.pdf
+*.doc
+*.docx
+.DS_Store

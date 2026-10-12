@@ -5,11 +5,16 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { validateEnvironment } from "@/lib/env";
 const globalDatabase = globalThis as unknown as {
   orbitDatabase?: PrismaClient;
+  orbitDatabaseConstructor?: typeof PrismaClient;
 };
 export function getDatabase() {
   const { DATABASE_URL } = validateEnvironment(process.env);
   if (!DATABASE_URL) return null;
-  if (!globalDatabase.orbitDatabase) {
+  if (
+    !globalDatabase.orbitDatabase ||
+    globalDatabase.orbitDatabaseConstructor !== PrismaClient
+  ) {
+    const stale = globalDatabase.orbitDatabase;
     globalDatabase.orbitDatabase = new PrismaClient({
       adapter: new PrismaPg({
         connectionString: DATABASE_URL,
@@ -19,6 +24,13 @@ export function getDatabase() {
         options: "-c timezone=UTC -c statement_timeout=5000",
       }),
     });
+    globalDatabase.orbitDatabaseConstructor = PrismaClient;
+    // Next preserves globalThis across hot reloads, including clients generated
+    // before a schema change. Retire that pool instead of keeping old delegates.
+    if (stale)
+      void stale.$disconnect().catch(() => {
+        console.warn("An outdated database pool could not close cleanly.");
+      });
   }
   return globalDatabase.orbitDatabase;
 }

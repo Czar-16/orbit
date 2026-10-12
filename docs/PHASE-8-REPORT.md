@@ -54,3 +54,9 @@ The real local Inngest interface was verified. A live external-source sync was n
 To use scheduling: restart Orbit, keep the database running, then start npm run inngest:dev in another terminal (port 3000 registration; alternate ports documented). Use Run now to recover pending delivery and inspect the real daily summary.
 
 STOP after this phase. Only Phase 9 (hardening and documentation) remains, and requires the user's next approval.
+
+## Follow-up repair: stale Prisma client during dev reload
+
+The user reported `database.processingRun` was undefined in the running dashboard. Next preserved a Prisma instance created before the scheduling model was generated. The global cache now records its generated constructor and replaces/disconnects an outdated client during reload. `npm run dev` also generates Prisma before starting Next. Files changed: src/lib/db.ts, package.json, tests/db-cache.test.ts and this report. No schema/data migration or Phase 9 work was added.
+
+Regression tests cover both a pre-upgrade cache without the constructor marker and a cache owned by an older generated constructor. Final npm run lint, npm run typecheck, npm test (180 tests / 26 files), npm run test:db (63 tests / 11 files), npm run build and git diff --check passed. A request to the user's running loopback dashboard returned HTTP 200 with Daily processing and without the page failure/stale-client error. Generated next-env.d.ts changes were restored. This validates page recovery; it does not claim an additional external sync. The earlier local-runtime requirements and known limitations still apply.

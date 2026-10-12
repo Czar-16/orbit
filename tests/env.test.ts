@@ -36,3 +36,26 @@ describe("startup environment", () => {
     }
   });
 });
+
+describe("database URL boundaries", () => {
+  it("accepts a credentialed loopback database", () => {
+    expect(
+      validateEnvironment({
+        DATABASE_URL: "postgresql://orbit:private@127.0.0.1:55432/orbit",
+      }).DATABASE_URL,
+    ).toBeDefined();
+  });
+  it.each([
+    "https://example.com/db",
+    "postgresql://orbit:private@remote.example/orbit",
+    "postgresql://orbit:private@127.0.0.1/orbit?host=remote.example",
+    "postgresql://orbit@127.0.0.1/orbit",
+  ])("rejects unsupported database URL without exposing it", (url) => {
+    expect(() => validateEnvironment({ DATABASE_URL: url })).toThrow(
+      "DATABASE_URL",
+    );
+    expect(() => validateEnvironment({ DATABASE_URL: url })).not.toThrow(
+      "private",
+    );
+  });
+});

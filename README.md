@@ -1,6 +1,6 @@
 # Orbit
 
-Local application workspace. Phase 1 is a Next.js dashboard shell with seven navigable pages. No database, job fetching, upload, matching, AI, or submission integration is enabled. Metrics are unavailable rather than invented.
+Local application workspace. Phase 1 is a Next.js dashboard shell with seven navigable pages. A local PostgreSQL foundation is available; job fetching, upload, matching, AI, and submission integrations remain deferred. Metrics are unavailable rather than invented.
 
 ## Setup
 
@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:3000. No environment file is required. If needed, copy `.env.example` to `.env.local`; `ORBIT_MODE` must be `local`. Invalid configuration stops startup and reports field names without printing values. No database or AI credentials are needed.
+Open http://127.0.0.1:3000 (or the port reported by Next.js if occupied). The shell runs without database configuration; to enable local storage, run `npm run db:setup` and restart the app. See [database setup](docs/DATABASE.md). No environment file is required for the shell. If needed, copy `.env.example` to `.env.local`; `ORBIT_MODE` must be `local`. Invalid configuration stops startup and reports field names without printing values. No database or AI credentials are needed.
 
 Production locally:
 

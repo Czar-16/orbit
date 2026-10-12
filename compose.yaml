@@ -1,0 +1,19 @@
+name: orbit
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: orbit
+      POSTGRES_DB: orbit
+      POSTGRES_PASSWORD: ${ORBIT_DB_PASSWORD:?Run npm run db:setup to create local credentials}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - orbit-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orbit -d orbit"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+volumes:
+  orbit-data:

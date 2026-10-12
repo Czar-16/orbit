@@ -1,6 +1,6 @@
 # Phase 2: database model and relations proposal
 
-Status: awaiting approval before writing a Prisma schema or migration. This document proposes the design; it does not establish a database connection or enable any workflow.
+Status: approved by the user’s instruction to proceed through Phase 4. This document proposes the design; it does not establish a database connection or enable any workflow.
 
 ## Decision requested
 

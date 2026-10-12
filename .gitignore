@@ -15,3 +15,5 @@ resumes/
 *.doc
 *.docx
 .DS_Store
+src/generated/
+.test-private/

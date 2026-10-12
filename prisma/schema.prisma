@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+}
+datasource db {
+  provider = "postgresql"
+}
+enum SourceKind {
+  MANUAL
+  OFFICIAL_API
+}
+enum PolicyDecision {
+  NOT_REVIEWED
+  ALLOWED
+  BLOCKED
+}
+enum IntakeMethod {
+  PASTED_URL
+  PASTED_DESCRIPTION
+  IMPORTED_FILE
+  PERMITTED_API
+}
+model Workspace {
+  id String @id @default(uuid()) @db.Uuid
+  key String @unique
+  timezone String @default("Asia/Kolkata")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  resumes ResumeVersion[]
+  profiles ProfileVersion[]
+  sources Source[]
+  jobs Job[]
+  revisions JobRevision[]
+}
+model ResumeVersion {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  storageKey String @unique
+  filename String
+  mimeType String
+  byteSize Int
+  sha256 String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  profiles ProfileVersion[]
+  @@unique([workspaceId, id])
+  @@index([workspaceId, createdAt])
+}
+model ProfileVersion {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  revision Int
+  schemaVersion Int @default(1)
+  facts Json @db.JsonB
+  resumeVersionId String? @db.Uuid
+  resume ResumeVersion? @relation(fields: [workspaceId, resumeVersionId], references: [workspaceId, id], onDelete: Restrict)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([workspaceId, revision])
+  @@unique([workspaceId, id])
+  @@index([workspaceId, createdAt])
+}
+model Source {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  identity String
+  label String
+  kind SourceKind @default(MANUAL)
+  endpoint String?
+  termsUrl String?
+  reviewedAt DateTime? @db.Timestamptz(3)
+  decision PolicyDecision @default(NOT_REVIEWED)
+  enabled Boolean @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  jobs Job[]
+  @@unique([workspaceId, identity])
+  @@unique([workspaceId, id])
+}
+model Job {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  sourceId String @db.Uuid
+  source Source @relation(fields: [workspaceId, sourceId], references: [workspaceId, id], onDelete: Restrict)
+  externalId String?
+  listingUrl String?
+  urlHash String?
+  discoveredAt DateTime @default(now()) @db.Timestamptz(3)
+  savedAt DateTime? @db.Timestamptz(3)
+  dismissedAt DateTime? @db.Timestamptz(3)
+  archivedAt DateTime? @db.Timestamptz(3)
+  latestRevisionNumber Int?
+  latestRevision JobRevision? @relation("LatestRevision", fields: [workspaceId, id, latestRevisionNumber], references: [workspaceId, jobId, revision], onDelete: Restrict, onUpdate: NoAction)
+  revisions JobRevision[] @relation("JobHistory")
+  @@unique([workspaceId, id])
+  @@unique([workspaceId, sourceId, externalId])
+  @@unique([workspaceId, urlHash])
+  @@index([workspaceId, discoveredAt])
+  @@index([workspaceId, savedAt])
+  @@index([workspaceId, archivedAt])
+  @@index([workspaceId, sourceId])
+}
+model JobRevision {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  jobId String @db.Uuid
+  job Job @relation("JobHistory", fields: [workspaceId, jobId], references: [workspaceId, id], onDelete: Restrict)
+  latestFor Job[] @relation("LatestRevision")
+  revision Int
+  schemaVersion Int @default(1)
+  description String?
+  contentHash String
+  capturedAt DateTime @default(now()) @db.Timestamptz(3)
+  method IntakeMethod
+  title String?
+  company String?
+  location String?
+  workArrangement String?
+  employmentType String?
+  compensationMin Decimal? @db.Decimal(14,2)
+  compensationMax Decimal? @db.Decimal(14,2)
+  currency String?
+  compensationPeriod String?
+  experienceRequirement String?
+  skills String[]
+  provenance Json @db.JsonB
+  @@unique([workspaceId, jobId, revision])
+  @@unique([workspaceId, id])
+  @@index([workspaceId, title])
+  @@index([workspaceId, company])
+  @@index([workspaceId, location])
+  @@index([workspaceId, workArrangement])
+}

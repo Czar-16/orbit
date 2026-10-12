@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { databaseStatus } from "@/lib/db";
 import { Monitor, Database, KeyRound, Clock3 } from "lucide-react";
 export const metadata: Metadata = { title: "Settings" };
-export default function Settings() {
+export const dynamic = "force-dynamic";
+export default async function Settings() {
+  const status = await databaseStatus();
   return (
     <>
       <div className="page-heading">
@@ -22,9 +25,8 @@ export default function Settings() {
             {
               icon: Database,
               label: "Database",
-              value: "Not configured",
-              detail:
-                "Phase 2 starts with a database model proposal for your approval.",
+              value: status.label,
+              detail: status.detail,
             },
             {
               icon: KeyRound,

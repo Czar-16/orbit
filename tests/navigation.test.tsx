@@ -97,7 +97,15 @@ describe("workspace navigation", () => {
     expect(screen.getByRole("button", { name: "Import job" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Run now" })).toBeDisabled();
     expect(
-      screen.getByText("Import job is unavailable until the job intake phase."),
+      screen.getByText("Import job requires local database setup."),
     ).toHaveAttribute("id", "import-reason");
+  });
+  it("opens manual intake when the real database is available", () => {
+    render(<AppShell importAvailable>Page</AppShell>);
+    expect(screen.getByRole("link", { name: "Import job" })).toHaveAttribute(
+      "href",
+      "/discover#import",
+    );
+    expect(screen.getByRole("button", { name: "Run now" })).toBeDisabled();
   });
 });

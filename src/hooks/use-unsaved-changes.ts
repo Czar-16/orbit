@@ -17,6 +17,13 @@ export function useUnsavedChanges(dirty: boolean) {
       )
         return;
       const target = new URL(anchor.href, window.location.href);
+      const current = new URL(window.location.href);
+      if (
+        target.origin === current.origin &&
+        target.pathname === current.pathname &&
+        target.search === current.search
+      )
+        return;
       if (
         target.href !== window.location.href &&
         !window.confirm("You have unsaved changes. Leave this page?")

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 import { validateEnvironment } from "@/lib/env";
@@ -21,7 +22,7 @@ export function getDatabase() {
   }
   return globalDatabase.orbitDatabase;
 }
-export async function databaseStatus() {
+export const databaseStatus = cache(async function databaseStatus() {
   const database = getDatabase();
   if (!database)
     return {
@@ -53,7 +54,7 @@ export async function databaseStatus() {
         "Start the local database and apply migrations with npm run db:setup. No successful connection is assumed.",
     };
   }
-}
+});
 export async function requireWorkspace() {
   const database = getDatabase();
   if (!database)

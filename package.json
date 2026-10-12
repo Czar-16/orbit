@@ -25,6 +25,7 @@
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "dotenv": "18.0.7",
+    "ipaddr.js": "2.5.0",
     "lucide-react": "1.55.0",
     "next": "16.4.0",
     "pg": "8.23.1",

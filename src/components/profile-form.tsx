@@ -9,6 +9,7 @@ import { type ActionResult } from "@/lib/action-result";
 import { type ProfileFacts } from "@/lib/profile-schema";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import { Button } from "@/components/ui/button";
+import { FieldMessage } from "@/components/field-message";
 import { FormFeedback } from "@/components/form-feedback";
 import { ProvenanceBadge } from "@/components/provenance-badge";
 const fields = [
@@ -108,13 +109,11 @@ export function ProfileForm({
                 aria-describedby={`hint-${field.key}`}
               />
             )}
-            <p
+            <FieldMessage
               id={`hint-${field.key}`}
-              className={errors[field.key] ? "field-error" : "field-hint"}
-            >
-              {errors[field.key]?.message ??
-                "Leave blank if unknown. Needs your input until explicitly confirmed."}
-            </p>
+              error={errors[field.key]?.message}
+              hint="Leave blank if unknown. Needs your input until explicitly confirmed."
+            />
           </div>
         ))}
       </div>
@@ -149,9 +148,11 @@ export function ProfileForm({
         </span>
       </label>
       {errors.confirmed && (
-        <p className="field-error" role="alert">
-          {errors.confirmed.message}
-        </p>
+        <FieldMessage
+          id="profile-confirmation-error"
+          error={errors.confirmed.message}
+          hint="Confirm facts before saving."
+        />
       )}
       <p className="mt-4 text-xs text-text-muted">
         Sensitive eligibility and demographic answers are not collected or

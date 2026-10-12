@@ -1,17 +1,20 @@
 # Orbit
 
-Local application workspace. Phase 1 is a Next.js dashboard shell with seven navigable pages. Local PostgreSQL storage, private PDF/TXT resume upload, and explicit profile verification are available. Job fetching, matching, AI, and submission integrations remain deferred. Metrics are unavailable rather than invented.
+Local job application workspace, implemented through Phase 4. Seven main pages provide private resumes, user-verified profiles, manual job intake, saved jobs, and deterministic skills matching. Application preparation, application tracking, background runs, AI, and external integrations remain unavailable.
 
 ## Setup
 
-Use Node.js 24 LTS and npm. Install from the committed lockfile:
+Use Node.js 24 LTS and npm:
 
 ```sh
 npm ci
+npm run db:setup
 npm run dev
 ```
 
-Open http://127.0.0.1:3000 (or the port reported by Next.js if occupied). The shell runs without database configuration; to enable local storage, run `npm run db:setup` and restart the app. See [database setup](docs/DATABASE.md). No environment file is required for the shell. If needed, copy `.env.example` to `.env.local`; `ORBIT_MODE` must be `local`. Invalid configuration stops startup and reports field names without printing values. No database or AI credentials are needed.
+Open the loopback URL printed by Next.js, normally http://127.0.0.1:3000. If that port is occupied, dev selects the next available port. Restart a previously running dev server after pulling these changes so it loads the updated dependencies and ignored local database configuration.
+
+`db:setup` generates private random credentials in ignored `.env.local`, starts the dedicated PostgreSQL service on 127.0.0.1:55432, applies migrations, and initializes an empty local workspace. It never seeds personal facts or jobs. See [database setup](docs/DATABASE.md). The shell also runs without database configuration, showing setup-needed states; no AI key is required.
 
 Production locally:
 
@@ -20,7 +23,17 @@ npm run build
 npm run start
 ```
 
-Both start scripts bind to loopback. This app has no authentication; do not override the hostname, expose it through a tunnel, or deploy it remotely. Real authentication must precede remote access.
+Both app scripts bind to 127.0.0.1. No authentication is implemented; add real authentication before any remote exposure or tunneling. Keep database credentials, resumes, and private data out of Git.
+
+## Available workflows
+
+1. In Resume & profile, upload a private PDF or UTF-8 TXT file up to 5 MB. No document facts are automatically extracted. Enter accurate profile facts and skills yourself, then explicitly confirm and save them.
+2. In Discover jobs, paste a public HTTPS URL, a description, or both; enter known employer-stated fields. URLs are validated through scheme/host/address checks, but listing pages are never fetched. A link-only import keeps unknown fields unknown.
+3. Import a JSON list of up to 50 jobs and 1 MB. All rows validate before any write. Exact URL duplicates preserve existing records; description-only entries stay independent. See [manual intake and matching](docs/INTAKE.md).
+4. Save, unsave, dismiss, archive, restore, inspect, and edit jobs. Edits create revisions. Filters, sorting, and pagination persist in the URL; date filters and dashboard today use Asia/Kolkata.
+5. Skills coverage compares supplied job requirements against explicitly verified profile skills. It works without AI, explains missing/unverified skills, and leaves unknown inputs unscored. Scores do not assess experience, salary, eligibility, or employer accuracy. Matches are pinned to job/profile revisions; list display recalculates against your latest profile.
+
+Nothing is submitted. Open original listing is a normal user-controlled link. Prepare application and Run now remain disabled with explanations.
 
 ## Checks
 
@@ -28,35 +41,38 @@ Both start scripts bind to loopback. This app has no authentication; do not over
 npm run lint
 npm run typecheck
 npm test
+npm run test:db
 npm run build
 ```
 
-Lint runs ESLint directly, separately from the Next.js build. Tests exercise startup validation, active navigation, sidebar toggling, unavailable controls, and the mobile More sheet keyboard behavior using a DOM environment. They do not automate a browser or contact job platforms.
+ESLint runs separately from the Next.js build. Unit/DOM tests cover navigation, confirmation/failure states, input/provenance validation, URLs, matching, filters, and Asia/Kolkata boundaries. Real integration tests use their own disposable PostgreSQL container and ignored temporary private storage, never the app database. Tests do not automate a browser or contact job listing pages.
 
-`next/font` downloads Geist Sans and Geist Mono at build time, requiring access to Google Fonts; the resulting fonts are served locally at runtime.
+Prisma generation runs during postinstall, typecheck, and build. Generated clients are ignored. next/font fetches Geist Sans/Mono during build and serves them locally at runtime. Private/environment files are excluded from build tracing.
 
-## Dependency limitations
+## Review in your browser
 
-The production dependency audit is clean. The full audit reports five high-severity entries in the development lint dependency chain (`eslint-config-next` → Next lint plugin → `fast-glob` → `micromatch` → `braces`). npm currently reports no compatible patched release; its suggested forced downgrade would leave the intended Next.js 16 lint stack. ESLint 9.39.5 is deprecated, but remains required by the lint plugins' current peer ranges; ESLint 10 was checked and rejected because of incompatible peers. Revisit the lint dependency chain when upstream publishes compatible updates.
+At 320px, 768px, and 1280px check navigation, form wrapping, job cards, sticky list headers, dialogs, and no horizontal overflow. Use Tab/Shift+Tab for visible focus, the skip link, More-sheet focus containment/Escape return, and job confirmation cancellation. Check that unsaved edits warn before leaving through navigation links or unloading. SPA history navigation remains unverified.
 
-## Layout and keyboard review
+After entering your own verified skills, import a real description with manually supplied required skills. Check the matching/missing explanation, save and find it in Saved jobs, edit a revision, refresh filters, and confirm that dashboard counts reflect actual records. A LinkedIn/Indeed URL must never fetch its page. No workflow should claim Applied.
 
-Manual browser inspection is still required. At 320px check stacked cards, bottom tabs, More sheet, text wrapping, and no horizontal overflow. At 768px check the 64px icon sidebar and link titles. At 1280px check the 240px sidebar, collapse/expand, and content width. At each width, use Tab/Shift+Tab to check focus rings and the skip link; open More with Enter, check focus containment, close with Escape, and confirm focus returns. Check disabled control explanations and reduced-motion settings.
+Manual visual/keyboard inspection was not performed in this tool session. DOM and HTTP checks do not replace it.
 
-## Project map
+## Limits
 
-- `src/app`: App Router pages, loading/error boundaries, and global design tokens.
-- `src/components`: responsive shell, shadcn-style Button and Radix Sheet primitives, and unavailable states.
-- `src/lib`: environment validation, navigation definitions, and component utilities.
-- `tests`: environment and navigation tests.
-- `docs/SOURCES.md`: source enablement register; no sources currently enabled.
+PDF/TXT only; no DOCX parsing or automatic resume/job extraction. No resume removal/redaction UI yet. JSON import supports the documented fields; no CSV parser. Lists sort and score-filter within the 1,000 most recent records matching database filters; recording matches handles up to 200 recent unarchived jobs. Missing job/profile information requires your input. Application preparation/tracking, authorized submissions, public API/feed intake, Inngest runs, and AI are future work.
 
-DESIGN.md is the UI contract. Tailwind 4 explicitly loads `tailwind.config.ts` with `@config`; every design color maps to a CSS variable. The permanent dark theme uses Geist fonts, semantic navigation, and reduced-motion support. Dates and daily limits in future workflows use Asia/Kolkata, with UTC timestamps in storage.
+Production dependencies audit clean. Five high-severity entries remain in the development lint chain (eslint-config-next → Next lint plugin → fast-glob → micromatch → braces); npm has no compatible patch. ESLint 9.39.5 remains required by current plugin peer ranges despite its deprecation. Scoped Prisma-tooling overrides are explained in docs/DATABASE.md and verified through real generation/migration tests.
 
-Private files, resumes, environment files, and keys are ignored. Future uploads must additionally validate file type/size/path and use private storage. There are no uploads or URL-fetching endpoints in this phase.
+## Reports and project map
 
-## Next phase
+- [Phase 2 database report](docs/PHASE-2.md)
+- [Phase 3 resume/profile report](docs/PHASE-3.md)
+- [Phase 4 intake/matching report](docs/PHASE-4.md)
+- [Private profile details](docs/PROFILE.md)
+- [Source register](docs/SOURCES.md)
+- `src/app`: routes, server actions, private attachment download, loading/error states.
+- `src/lib`: server-only storage/database services, Zod contracts, provenance, filters, matching, and time helpers.
+- `prisma`: schema and migrations; `scripts`: local setup/disposable tests.
+- `tests`: unit/DOM and real database checks.
 
-Phase 2 begins with a proposed PostgreSQL/Prisma database model and relations for user approval before writing a schema. Review the [Phase 2 database proposal](docs/PHASE-2-DATABASE-PROPOSAL.md). Intake, resume/profile, matching, application preparation/tracking, and background processing remain later work. No exact later phase numbers are assigned by this foundation.
-
-Implementation references: [Next.js installation](https://nextjs.org/docs/app/getting-started/installation), [shadcn Tailwind 4](https://ui.shadcn.com/docs/tailwind-v4), [Tailwind directives](https://tailwindcss.com/docs/functions-and-directives).
+DESIGN.md remains the AMOLED UI contract. AGENTS.md remains the compliance/truth/security contract. The user authorized continuous work through Phase 4 and commit/push after each phase. Work stops after the Phase 4 report for review before the next phase.

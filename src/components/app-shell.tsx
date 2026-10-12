@@ -57,7 +57,13 @@ function NavLink({
     </Link>
   );
 }
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  importAvailable = false,
+}: {
+  children: React.ReactNode;
+  importAvailable?: boolean;
+}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -106,21 +112,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Monitor size={13} aria-hidden="true" />
               Local mode
             </span>
-            <span
-              tabIndex={0}
-              role="group"
-              aria-label="Import job unavailable. Job intake is enabled in a later phase."
-              title="Job intake is enabled in a later phase."
-            >
-              <Button
-                disabled
-                variant="secondary"
-                aria-describedby="import-reason"
-              >
-                <Plus size={16} aria-hidden="true" />
-                Import job
+            {importAvailable ? (
+              <Button asChild variant="secondary">
+                <Link href="/discover#import">
+                  <Plus size={16} aria-hidden="true" />
+                  Import job
+                </Link>
               </Button>
-            </span>
+            ) : (
+              <span
+                tabIndex={0}
+                role="group"
+                aria-label="Import job unavailable. Set up the local database first."
+                title="Set up the local database first."
+              >
+                <Button
+                  disabled
+                  variant="secondary"
+                  aria-describedby="import-reason"
+                >
+                  <Plus size={16} aria-hidden="true" />
+                  Import job
+                </Button>
+              </span>
+            )}
             <span
               tabIndex={0}
               role="group"
@@ -138,7 +153,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {children}
           <div className="availability-note">
             <p id="import-reason">
-              Import job is unavailable until the job intake phase.
+              {importAvailable
+                ? "Import links, descriptions, or JSON lists manually. No listing pages are fetched."
+                : "Import job requires local database setup."}
             </p>
             <p id="run-reason">
               Run now is unavailable until the background processing phase.

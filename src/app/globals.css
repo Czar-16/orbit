@@ -30,7 +30,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-geist-sans), sans-serif;
+  font-family: var(--font-geist-sans, sans-serif);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -438,4 +438,11 @@ h2 {
   .form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.job-card {
+  transition: border-color 150ms ease-out;
+}
+.job-card:hover {
+  border-color: var(--border-strong);
 }

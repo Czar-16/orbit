@@ -31,6 +31,7 @@ model Workspace {
   sources Source[]
   jobs Job[]
   revisions JobRevision[]
+  matches MatchResult[]
 }
 model ResumeVersion {
   id String @id @default(uuid()) @db.Uuid
@@ -55,6 +56,7 @@ model ProfileVersion {
   schemaVersion Int @default(1)
   facts Json @db.JsonB
   resumeVersionId String? @db.Uuid
+  matches MatchResult[]
   resume ResumeVersion? @relation(fields: [workspaceId, resumeVersionId], references: [workspaceId, id], onDelete: Restrict)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   @@unique([workspaceId, revision])
@@ -108,6 +110,7 @@ model JobRevision {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
   jobId String @db.Uuid
   job Job @relation("JobHistory", fields: [workspaceId, jobId], references: [workspaceId, id], onDelete: Restrict)
+  matches MatchResult[]
   latestFor Job[] @relation("LatestRevision")
   revision Int
   schemaVersion Int @default(1)
@@ -133,4 +136,20 @@ model JobRevision {
   @@index([workspaceId, company])
   @@index([workspaceId, location])
   @@index([workspaceId, workArrangement])
+}
+
+model MatchResult {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  jobRevisionId String @db.Uuid
+  jobRevision JobRevision @relation(fields: [workspaceId, jobRevisionId], references: [workspaceId, id], onDelete: Restrict)
+  profileVersionId String @db.Uuid
+  profileVersion ProfileVersion @relation(fields: [workspaceId, profileVersionId], references: [workspaceId, id], onDelete: Restrict)
+  ruleVersion String
+  score Int?
+  explanation Json @db.JsonB
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([workspaceId, jobRevisionId, profileVersionId, ruleVersion])
+  @@index([workspaceId, createdAt])
 }

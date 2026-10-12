@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { databaseStatus } from "@/lib/db";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/app-shell";
 import "./globals.css";
@@ -12,15 +13,19 @@ export const metadata: Metadata = {
   description: "A local workspace for preparing and tracking job applications.",
   robots: { index: false, follow: false },
 };
-export default function RootLayout({
+export const dynamic = "force-dynamic";
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const status = await databaseStatus();
   return (
     <html lang="en" className="dark">
       <body className={`${geist.variable} ${mono.variable}`}>
-        <AppShell>{children}</AppShell>
+        <AppShell importAvailable={status.state === "ready"}>
+          {children}
+        </AppShell>
       </body>
     </html>
   );

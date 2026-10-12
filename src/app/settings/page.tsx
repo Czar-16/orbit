@@ -33,7 +33,7 @@ export default async function Settings() {
               label: "AI assistance",
               value: "Not connected",
               detail:
-                "No AI key is required for this shell. Deterministic matching is planned for a later phase.",
+                "No AI key is required. Deterministic matching compares confirmed profile skills with manually supplied requirements.",
             },
             {
               icon: Clock3,

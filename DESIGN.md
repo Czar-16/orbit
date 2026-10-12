@@ -179,3 +179,7 @@ _Additions to this system (append here when extended):_
 ### Shared form primitives (Phases 3–4)
 
 `.field-label`, `.field-input`, `.field-hint`, and `.field-error` use the existing typography, border, background, and semantic tokens. Inputs are at least 44px tall. `.form-grid` uses two columns on desktop and one on mobile, with 16px gaps. Provenance badges next to inputs describe the saved fact; edited values show User-provided until explicit verification is saved. Sensitive answers remain uncollected and unknown.
+
+### Manual intake and skills matching (Phase 4)
+
+Job lists use the standard job-card layout at all widths, with URL-backed filters, sorting, and pagination. Dismissed is a neutral job-only label with text; it is not an application status. Skills-only scores use the existing score bands, a visible prioritization disclaimer, and an Inferred-by-rules label. Unknown requirements/profile skills produce Unavailable instead of a manufactured score. Source names derived from manually supplied URLs remain User-provided, not employer-verified.

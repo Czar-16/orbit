@@ -26,7 +26,8 @@ export function jobDefaults(job: JobWithRevision) {
     currency: revision?.currency ?? "",
     compensationPeriod: revision?.compensationPeriod ?? "",
     experienceRequirement: revision?.experienceRequirement ?? "",
-    skills: revision?.skills.join(", ") ?? "",
+    // Do not expand a valid near-limit input when reconstructing the editor.
+    skills: revision?.skills.join(",") ?? "",
   });
 }
 export async function queryJobs(filters: JobFilters, savedOnly = false) {

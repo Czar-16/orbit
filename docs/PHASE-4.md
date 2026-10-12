@@ -94,4 +94,10 @@ Prisma/model/dependency versions were inspected before use. Matching-table SQL w
 
 ## Review boundary
 
+### Follow-up inspection (2026-10-12)
+
+Reviewed the pushed Phase 4 implementation at `e79d856`. Fixed one concrete editing gap: reconstructing comma-separated skills added spaces, which could push a valid 3,000-character import over the editor's validation limit. The editor now reconstructs skills without expanding the input. A disposable PostgreSQL regression test imports, reopens, and edits an entry at that limit.
+
+Changed files: `src/lib/job-query.ts`, `tests/db/jobs.test.ts`, and this report. Re-ran `npm run lint`, `npm run typecheck`, `npm test` (71 tests / 11 files), `npm run test:db` (22 tests / 3 files), and `npm run build`; all passed. Existing generated `next-env.d.ts` dev references are preserved outside the commit. Private data was not modified. The limitations above remain, including outstanding manual visual review. No Phase 5 work started.
+
 Commit and push follow the completed checks. Restart the running dev server, then review your own profile/resume, a real manually supplied job, save/restore/edit/filter behavior, and skills explanations using README.md. Stop after this report and wait for approval before the next phase (application preparation is the proposed next workflow).

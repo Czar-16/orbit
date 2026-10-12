@@ -39,6 +39,7 @@ function revision(revisionNumber: number) {
     workspaceId,
     jobId,
     revision: revisionNumber,
+    schemaVersion: 1,
     method: "PASTED_URL" as const,
     contentHash: hash,
     skills: [],

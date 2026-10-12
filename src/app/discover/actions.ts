@@ -1,5 +1,5 @@
 "use server";
-import { z } from "zod";
+import { jobFileMetadataSchema, parseJobFile } from "@/lib/job-file";
 import { revalidatePath } from "next/cache";
 import {
   saveJob,
@@ -41,31 +41,17 @@ export async function importJobFileAction(
   try {
     const file = form.get("jobs");
     if (!(file instanceof File))
-      throw new InputError("Choose a JSON job list to import.");
-    const metadata = z
-      .object({
-        name: z
-          .string()
-          .max(120)
-          .regex(/^[A-Za-z0-9 _.-]+\.json$/),
-        size: z
-          .number()
-          .int()
-          .positive()
-          .max(1024 * 1024),
-        type: z.enum(["application/json", "text/plain", ""]),
-      })
-      .safeParse({ name: file.name, size: file.size, type: file.type });
+      throw new InputError("Choose a CSV or JSON job list to import.");
+    const metadata = jobFileMetadataSchema.safeParse({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+    });
     if (!metadata.success)
       throw new InputError(
-        "Use a JSON file up to 1 MB with a simple filename.",
+        "Use a CSV or JSON file up to 1 MB with a simple filename and matching file type.",
       );
-    let contents: unknown;
-    try {
-      contents = JSON.parse(await file.text());
-    } catch {
-      throw new InputError("This file is not valid JSON.");
-    }
+    const contents = parseJobFile(await file.text(), metadata.data.name);
     const result = await importJobs(contents);
     revalidateJobs();
     return {

@@ -10,6 +10,7 @@ import { matchSkills } from "@/lib/matching";
 import { JobCard } from "@/components/job-card";
 import { JobImportForm } from "@/components/job-import-form";
 import { ProvenanceBadge } from "@/components/provenance-badge";
+import { JobRevisionHistory } from "@/components/job-revision-history";
 export const metadata: Metadata = { title: "Inspect job" };
 export const dynamic = "force-dynamic";
 export default async function Page({
@@ -44,7 +45,14 @@ export default async function Page({
   const history = await database.jobRevision.findMany({
     where: { workspaceId, jobId: job.id },
     orderBy: { revision: "desc" },
-    select: { revision: true, capturedAt: true, method: true },
+    select: {
+      revision: true,
+      capturedAt: true,
+      method: true,
+      schemaVersion: true,
+      listingUrl: true,
+      sourceSnapshot: true,
+    },
   });
   return (
     <>
@@ -67,7 +75,7 @@ export default async function Page({
       />
       <section className="panel mt-4">
         <h2 className="mb-4 flex flex-wrap items-center gap-2">
-          Original supplied description{" "}
+          Current supplied description{" "}
           <ProvenanceBadge provenance={evidence.description.provenance} />
         </h2>
         {revision.description ? (
@@ -81,7 +89,7 @@ export default async function Page({
         )}
         {job.listingUrl && (
           <p className="mt-4 break-all font-mono text-xs text-text-muted">
-            {job.listingUrl}{" "}
+            Current listing URL: {job.listingUrl}{" "}
             <ProvenanceBadge provenance={evidence.listingUrl.provenance} />
           </p>
         )}
@@ -90,22 +98,7 @@ export default async function Page({
         <h2 className="mb-4">Edit supplied job details</h2>
         <JobImportForm defaults={jobDefaults(job)} />
       </section>
-      <section className="panel mt-4">
-        <h2 className="mb-4">Revision history</h2>
-        <ul className="space-y-2 text-xs text-text-muted">
-          {history.map((item) => (
-            <li key={item.revision}>
-              Revision {item.revision} ·{" "}
-              {item.method.toLowerCase().replaceAll("_", " ")} ·{" "}
-              {new Intl.DateTimeFormat("en-IN", {
-                timeZone: "Asia/Kolkata",
-                dateStyle: "medium",
-                timeStyle: "short",
-              }).format(item.capturedAt)}
-            </li>
-          ))}
-        </ul>
-      </section>
+      <JobRevisionHistory history={history} />
     </>
   );
 }

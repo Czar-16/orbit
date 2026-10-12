@@ -74,7 +74,7 @@ export function profileDefaults(
     skills: facts.skills
       .map((skill) => skill.value)
       .filter(Boolean)
-      .join(", "),
+      .join(","),
     expectedRevision: revision,
     resumeVersionId,
     confirmed: false,

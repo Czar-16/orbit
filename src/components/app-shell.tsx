@@ -154,7 +154,7 @@ export function AppShell({
           <div className="availability-note">
             <p id="import-reason">
               {importAvailable
-                ? "Import links, descriptions, or JSON lists manually. No listing pages are fetched."
+                ? "Import links, descriptions, or CSV/JSON lists manually. No listing pages are fetched."
                 : "Import job requires local database setup."}
             </p>
             <p id="run-reason">

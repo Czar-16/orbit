@@ -10,6 +10,15 @@ URLs undergo server-side Zod validation plus public-address/DNS validation. Non-
 
 JSON imports use an array of objects with the same field names as the form. All fields are strings; omit unknown fields. Limit: 50 rows / 1 MB. Supported keys are listingUrl, description, title, company, location, workArrangement, employmentType, compensationMin, compensationMax, currency, compensationPeriod, experienceRequirement, and skills. At least listingUrl or description is required for each row. Skills are comma-separated. Compensation requires a known amount, a three-letter uppercase currency code, and hour/month/year period. Bounds are nonnegative with at most two decimal places. Every row and URL is validated before a single transaction writes the batch; one invalid row causes no partial import.
 
+CSV imports use the same supported field names as unique headers (case-sensitive), with one job per row and comma delimiters. Optional columns may be omitted. Quote cells containing commas, quotes, or line breaks; escape a quote with two quotes. UTF-8 text with an optional BOM, LF/CRLF line endings, and a final newline are supported. Blank rows, unknown/duplicate headers, malformed quoting, uneven row widths, and invalid fields are rejected before ingestion. Use at most 50 jobs / 1 MB and a simple .csv or .json filename. File MIME type must be compatible with its extension. Both formats pass through the same server validation and atomic transaction; descriptions are never executed or treated as instructions.
+
+```csv
+title,description,skills
+"<employer-stated title>","<pasted description>","TypeScript,React"
+```
+
+Replace placeholders with your actual supplied listing text; this example is not seeded into the app.
+
 LinkedIn/Indeed origins receive manual-only Source records with enabled=false. Other URL host labels do not imply an authorized API/feed. Job descriptions are stored as untrusted text and rendered through React escaping, never interpreted as instructions.
 
 ## Lists and revisions
@@ -18,7 +27,7 @@ Saved jobs includes active saved records. Dismiss and Archive ask for confirmati
 
 Filters cover role, company, location, source, status, skills-score range, and discovered dates; sorting supports newest, oldest, company, and skills score. State stays in the query string, with 20 cards per page. Lists cap database-filtered candidates at 1,000 recent records before skills filtering/sorting and clearly disclose truncation. Invalid filters show an error and default filters. Unknown scores are excluded from numeric score ranges. Dates are Asia/Kolkata calendar dates.
 
-Inspect shows supplied data, the latest description, and revision history. Editing creates a new immutable revision and pins a new match; stale-tab edits are rejected. Matching/import history does not create an application or Applied event.
+Inspect shows supplied data, the latest description, and revision history. New revisions (schemaVersion 2) preserve the supplied listing URL and a source identity/label snapshot, with User-provided provenance. History shows these values per revision even after URL removal or source-label changes. Older schemaVersion 1 revisions display historical listing identity as Unknown; current URLs are never copied backward into old history. Editing creates a new immutable revision and pins a new match; stale-tab edits are rejected. Matching/import history does not create an application or Applied event.
 
 ## Skills coverage
 
@@ -32,4 +41,4 @@ MatchResult pins the exact job and profile revisions plus rule version, bounded 
 
 Manual browser layout and keyboard checks remain outstanding. Local HTTP checks and disposable PostgreSQL tests passed. Invalid job detail IDs render the not-found UI; Next.js streamed not-found responses may carry HTTP 200 after headers have streamed, while invalid resume IDs and unknown top-level paths return 404. No browser automation was used.
 
-No CSV parser, automatic requirement extraction, AI calls, application preparation/tracking, source integrations, or Inngest execution is enabled. Prepare application and Run now remain disabled with accessible explanations.
+No automatic requirement extraction, AI calls, application preparation/tracking, source integrations, or Inngest execution is enabled. Prepare application and Run now remain disabled with accessible explanations.

@@ -27,3 +27,11 @@ Private documents will be stored under ignored `private/resumes`, outside /publi
 Prisma generation occurs during postinstall, typecheck, and build. `src/generated/prisma` is ignored. Scoped npm overrides patch deepmerge-ts to 8.0.2 and mysql2 to 3.24.5 in Prisma tooling; CLI generation, validation, migration deployment, and real database tests were verified with these versions. The remaining lint dependency advisory is documented in README.md.
 
 References: [Prisma 7 generator](https://www.prisma.io/docs/orm/v7/prisma-client/setup-and-configuration/generating-prisma-client), [Prisma 7 driver pooling](https://www.prisma.io/docs/orm/v7/prisma-client/setup-and-configuration/databases-connections/connection-pool), [official PostgreSQL container](https://hub.docker.com/_/postgres).
+
+## Listing history migration
+
+`202610120005_listing_history` adds nullable listingUrl/sourceSnapshot to JobRevision and makes new revisions schemaVersion 2. Snapshot validation preserves the existing value/evidence constraints, requires manual source metadata with User-provided evidence, and enforces listing-URL provenance. Existing rows keep schemaVersion 1 and SQL NULL snapshots; no current identity is backfilled as historical fact. Workspace/job relations and deletion rules remain unchanged.
+
+Apply with `npm run db:setup` for the dedicated Orbit Compose database; restart an existing app to load the regenerated Prisma client. Integration coverage also replays the old migrations in a transaction-isolated test schema, creates a real legacy record, then verifies the upgrade preserves all existing fields while leaving snapshots unknown.
+
+The SQL column/default changes were generated with the installed Prisma 7.10.0 `migrate diff --from-schema --to-schema --script --output` workflow from the [Prisma v7 CLI documentation](https://www.prisma.io/docs/cli/v7/migrate/diff); custom constraints were added explicitly.

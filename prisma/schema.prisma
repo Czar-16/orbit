@@ -113,7 +113,9 @@ model JobRevision {
   matches MatchResult[]
   latestFor Job[] @relation("LatestRevision")
   revision Int
-  schemaVersion Int @default(1)
+  schemaVersion Int @default(2)
+  listingUrl String?
+  sourceSnapshot Json? @db.JsonB
   description String?
   contentHash String
   capturedAt DateTime @default(now()) @db.Timestamptz(3)

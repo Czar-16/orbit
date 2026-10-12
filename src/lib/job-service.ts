@@ -14,6 +14,7 @@ import { providedEvidence, unknownEvidence } from "@/lib/provenance";
 import { profileFactsSchema } from "@/lib/profile-schema";
 import { matchSkills, MATCH_RULE_VERSION } from "@/lib/matching";
 import { InputError } from "@/lib/action-result";
+import { captureManualSource } from "@/lib/job-history";
 const sha256 = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 function identifySource(url: string) {
@@ -159,6 +160,9 @@ export async function importJobs(inputs: unknown, resolver?: AddressResolver) {
             workspaceId,
             jobId: job.id,
             revision: 1,
+            schemaVersion: 2,
+            listingUrl: data.listingUrl,
+            sourceSnapshot: captureManualSource(source),
             ...data.values,
             provenance: data.provenance,
             contentHash: data.contentHash,
@@ -244,6 +248,9 @@ export async function saveJob(input: unknown, resolver?: AddressResolver) {
         workspaceId,
         jobId: job.id,
         revision,
+        schemaVersion: 2,
+        listingUrl: data.listingUrl,
+        sourceSnapshot: captureManualSource(source),
         ...data.values,
         provenance: data.provenance,
         contentHash: data.contentHash,

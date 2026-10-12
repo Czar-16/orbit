@@ -29,8 +29,8 @@ Both app scripts bind to 127.0.0.1. No authentication is implemented; add real a
 
 1. In Resume & profile, upload a private PDF or UTF-8 TXT file up to 5 MB. No document facts are automatically extracted. Enter accurate profile facts and skills yourself, then explicitly confirm and save them.
 2. In Discover jobs, paste a public HTTPS URL, a description, or both; enter known employer-stated fields. URLs are validated through scheme/host/address checks, but listing pages are never fetched. A link-only import keeps unknown fields unknown.
-3. Import a JSON list of up to 50 jobs and 1 MB. All rows validate before any write. Exact URL duplicates preserve existing records; description-only entries stay independent. See [manual intake and matching](docs/INTAKE.md).
-4. Save, unsave, dismiss, archive, restore, inspect, and edit jobs. Edits create revisions. Filters, sorting, and pagination persist in the URL; date filters and dashboard today use Asia/Kolkata.
+3. Import a CSV or JSON list of up to 50 jobs and 1 MB. All rows validate before any write. Exact URL duplicates preserve existing records; description-only entries stay independent. See [manual intake and matching](docs/INTAKE.md).
+4. Save, unsave, dismiss, archive, restore, inspect, and edit jobs. Edits create revisions with listing URL/source snapshots; older revisions show unknown listing history. Filters, sorting, and pagination persist in the URL; date filters and dashboard today use Asia/Kolkata.
 5. Skills coverage compares supplied job requirements against explicitly verified profile skills. It works without AI, explains missing/unverified skills, and leaves unknown inputs unscored. Scores do not assess experience, salary, eligibility, or employer accuracy. Matches are pinned to job/profile revisions; list display recalculates against your latest profile.
 
 Nothing is submitted. Open original listing is a normal user-controlled link. Prepare application and Run now remain disabled with explanations.
@@ -59,7 +59,7 @@ Manual visual/keyboard inspection was not performed in this tool session. DOM an
 
 ## Limits
 
-PDF/TXT only; no DOCX parsing or automatic resume/job extraction. No resume removal/redaction UI yet. JSON import supports the documented fields; no CSV parser. Lists sort and score-filter within the 1,000 most recent records matching database filters; recording matches handles up to 200 recent unarchived jobs. Missing job/profile information requires your input. Application preparation/tracking, authorized submissions, public API/feed intake, Inngest runs, and AI are future work.
+PDF/TXT only; no DOCX parsing or automatic resume/job extraction. No resume removal/redaction UI yet. CSV and JSON imports support the documented fields. Lists sort and score-filter within the 1,000 most recent records matching database filters; recording matches handles up to 200 recent unarchived jobs. Missing job/profile information requires your input. Application preparation/tracking, authorized submissions, public API/feed intake, Inngest runs, and AI are future work.
 
 Production dependencies audit clean. Five high-severity entries remain in the development lint chain (eslint-config-next → Next lint plugin → fast-glob → micromatch → braces); npm has no compatible patch. ESLint 9.39.5 remains required by current plugin peer ranges despite its deprecation. Scoped Prisma-tooling overrides are explained in docs/DATABASE.md and verified through real generation/migration tests.
 
@@ -75,4 +75,4 @@ Production dependencies audit clean. Five high-severity entries remain in the de
 - `prisma`: schema and migrations; `scripts`: local setup/disposable tests.
 - `tests`: unit/DOM and real database checks.
 
-DESIGN.md remains the AMOLED UI contract. AGENTS.md remains the compliance/truth/security contract. The user authorized continuous work through Phase 4 and commit/push after each phase. Work stops after the Phase 4 report for review before the next phase.
+DESIGN.md remains the AMOLED UI contract. AGENTS.md remains the compliance/truth/security contract. The user authorized continuous work through Phase 4 and commit/push after each phase. Recent continuations fix profile reopening, add CSV intake, and preserve listing history; see [PROMPT alignment](docs/PROMPT-ALIGNMENT.md). Work stops after each phase report for approval.

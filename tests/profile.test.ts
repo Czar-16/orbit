@@ -5,6 +5,23 @@ import {
   profileDefaults,
 } from "@/lib/profile-input";
 describe("explicit profile verification", () => {
+  it("reopens a maximum-length skills list without invalidating unrelated edits", () => {
+    const skills = `${"a".repeat(999)},${"b".repeat(1000)}`;
+    const input = profileInputSchema.parse({
+      ...profileDefaults(),
+      skills,
+      confirmed: true,
+    });
+    const reopened = profileDefaults(profileFactsFromInput(input), 1);
+    expect(reopened.skills).toBe(skills);
+    expect(
+      profileInputSchema.parse({
+        ...reopened,
+        headline: "Updated",
+        confirmed: true,
+      }).skills,
+    ).toBe(skills);
+  });
   it("requires user confirmation", () => {
     expect(profileInputSchema.safeParse(profileDefaults()).success).toBe(false);
   });

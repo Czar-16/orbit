@@ -40,20 +40,20 @@ export function JobFileImport() {
   return (
     <form ref={form} onSubmit={submit}>
       <label className="field-label" htmlFor="job-file">
-        JSON job list
+        CSV or JSON job list
       </label>
       <input
         className="field-input"
         id="job-file"
         name="jobs"
         type="file"
-        accept=".json,application/json"
+        accept=".csv,.json,text/csv,application/json"
         required
         onChange={(event) => setSelected(!!event.target.files?.length)}
         aria-describedby="job-file-hint"
       />
       <p className="field-hint" id="job-file-hint">
-        Up to 50 jobs and 1 MB. Use an array of objects with listingUrl,
+        Up to 50 jobs and 1 MB. Use CSV headers or a JSON array with listingUrl,
         description, and optional job fields. All rows are validated before any
         job is saved.
       </p>
@@ -67,12 +67,21 @@ export function JobFileImport() {
           }
         </pre>
         <p className="mt-2">
+          CSV uses the same field names as headers. Quote cells containing
+          commas, quotes, or line breaks; double quotes inside quoted cells.
+        </p>
+        <pre className="mt-2 overflow-x-auto rounded-md bg-surface-2 p-3 font-mono">
+          {
+            'title,description,skills\n"<employer-stated title>","<pasted description>","TypeScript,React"'
+          }
+        </pre>
+        <p className="mt-2">
           Replace the angle-bracket instructions with your actual input. No
           example jobs are added.
         </p>
       </details>
       <Button variant="secondary" className="mt-4" disabled={pending}>
-        {pending ? "Importing…" : "Import JSON list"}
+        {pending ? "Importing…" : "Import job list"}
       </Button>
       <FormFeedback result={result} />
     </form>

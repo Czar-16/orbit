@@ -1,6 +1,6 @@
 # Orbit
 
-Local application workspace. Phase 1 is a Next.js dashboard shell with seven navigable pages. A local PostgreSQL foundation is available; job fetching, upload, matching, AI, and submission integrations remain deferred. Metrics are unavailable rather than invented.
+Local application workspace. Phase 1 is a Next.js dashboard shell with seven navigable pages. Local PostgreSQL storage, private PDF/TXT resume upload, and explicit profile verification are available. Job fetching, matching, AI, and submission integrations remain deferred. Metrics are unavailable rather than invented.
 
 ## Setup
 

@@ -175,3 +175,7 @@ Matches tokens; works at 320px, 768px, and 1280px; has loading, empty, and error
 ---
 
 _Additions to this system (append here when extended):_
+
+### Shared form primitives (Phases 3–4)
+
+`.field-label`, `.field-input`, `.field-hint`, and `.field-error` use the existing typography, border, background, and semantic tokens. Inputs are at least 44px tall. `.form-grid` uses two columns on desktop and one on mobile, with 16px gaps. Provenance badges next to inputs describe the saved fact; edited values show User-provided until explicit verification is saved. Sensitive answers remain uncollected and unknown.

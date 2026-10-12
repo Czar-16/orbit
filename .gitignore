@@ -8,9 +8,9 @@ coverage/
 *.pem
 *.key
 *.log
-private/
-uploads/
-resumes/
+/private/
+/uploads/
+/resumes/
 *.pdf
 *.doc
 *.docx

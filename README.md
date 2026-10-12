@@ -1,46 +1,74 @@
 # Orbit
 
-Local job application workspace through Phase 9. Private resumes, user-verified profiles, manual intake, seven-category deterministic matching, editable preferences, saved jobs, and permitted public-API discovery work locally without an AI key. Versioned application preparation/review works without AI; manual application tracking, notes, follow-ups and complete JSON/CSV export are available. Local Inngest daily scheduling, startup catch-up, bounded retries and daily processing summaries are available.
+Orbit is a local job search and application workspace. It helps you organize job listings, compare them with a profile you verify, prepare application materials for your review, and track applications you submit yourself.
 
-## Setup
+**Project status:** development is paused. The app is usable as a local project, but some workflows still need manual effort. Contributions and forks are welcome. This project does not submit applications for you.
 
-Use Node.js 24 LTS and npm:
+## What it can do
+
+- Store your profile and PDF or text resumes locally, with explicit review before profile facts are verified.
+- Add jobs by pasting a listing URL and/or description, or importing a CSV/JSON file. LinkedIn and Indeed listings must be provided by you; their pages are never fetched.
+- Discover listings from the reviewed public APIs for Himalayas, Remotive, Jobicy, and Remote OK. Source permissions, attribution, and limits are documented in [docs/SOURCES.md](docs/SOURCES.md).
+- Match jobs against your profile and preferences using deterministic scoring. AI is optional and is not needed for matching or the standard preparation flow.
+- Prepare editable application drafts from your verified information, review unknown answers, and track applications, notes, and follow-ups.
+- Export workspace data as JSON or CSV.
+
+Job descriptions and imported listings are treated as untrusted input. Scores and aggregated listing details are aids for prioritization, not verified employer information. You decide what information to confirm and what to submit.
+
+## Run locally
+
+### Requirements
+
+- Ubuntu or a compatible Linux environment
+- Node.js `>=24.11.1 <25`
+- npm `>=11`
+- Docker with Compose v2
+
+The default setup uses local ports 3000 (app), 55432 (PostgreSQL), and 8288 (Inngest). See [docs/OPERATIONS.md](docs/OPERATIONS.md) for troubleshooting and alternate database setup.
+
+### Install and start
 
 ```sh
+git clone <your-fork-url>
+cd orbit
 npm ci
 npm run db:setup
 npm run dev
 ```
 
-Open the loopback URL printed by Next.js, normally http://127.0.0.1:3000. If that port is occupied, dev selects the next available port. Restart a previously running dev server after pulling these changes so it loads the updated dependencies and ignored local database configuration.
+Open the loopback address printed by Next.js, normally <http://127.0.0.1:3000>. `db:setup` creates ignored local credentials in `.env.local`, starts Orbit's dedicated PostgreSQL container, applies migrations, and creates an empty workspace. It does not add sample jobs or personal information. Keep the app bound to loopback; authentication is not implemented, so do not expose it to the internet or a shared network.
 
-`db:setup` generates private random credentials in ignored `.env.local`, starts the dedicated PostgreSQL service on 127.0.0.1:55432, applies migrations, and initializes an empty local workspace. It never seeds personal facts or jobs. See [database setup](docs/DATABASE.md). The shell also runs without database configuration, showing setup-needed states; no AI key is required.
-
-Start `npm run inngest:dev` in another terminal for daily scheduling. It binds to loopback port 8288 and registers Orbit on port 3000. See [scheduling setup and recovery](docs/SCHEDULING.md) for other app ports, daily caps and limitations.
-
-Production locally:
+To use daily scheduled discovery, leave Orbit running and start the local Inngest runtime in a second terminal:
 
 ```sh
-npm run build
-npm run start
+npm run inngest:dev
 ```
 
-Both app scripts bind to 127.0.0.1. No authentication is implemented; add real authentication before any remote exposure or tunneling. Keep database credentials, resumes, and private data out of Git.
+Scheduling behavior, daily limits, and recovery details are in [docs/SCHEDULING.md](docs/SCHEDULING.md). You can also use manual discovery from the app without setting up a job search profile first.
 
-## Available workflows
+To stop the database container while preserving its data:
 
-1. In Resume & profile, upload a private PDF or UTF-8 TXT file up to 5 MB. Extract local text or review proposed missing facts, check every field, and explicitly confirm/save it. No extracted facts are automatically saved or verified. Select a resume version or designate a default.
-2. In Discover jobs, paste a public HTTPS URL, a description, or both; enter known employer-stated fields. URLs are validated through scheme/host/address checks, but listing pages are never fetched. A link-only import keeps unknown fields unknown.
-3. Import a CSV or JSON list of up to 50 jobs and 1 MB. All rows validate before any write. Exact URL duplicates preserve existing records; description-only entries stay independent. See [manual intake and matching](docs/INTAKE.md).
-4. Save, unsave, dismiss, archive, restore, inspect, and edit jobs. Edits create revisions with listing URL/source snapshots; older revisions show unknown listing history. Filters, sorting, and pagination persist in the URL; date filters and dashboard today use Asia/Kolkata.
-5. In Settings, save matching preferences and weights. Seven categories use confirmed points out of 100 with visible unknown weight and a possible upper bound; missing information is never rescaled into a match. Explicit numeric experience, education level, absent skills, and verbatim project bullets require your confirmation in Profile. Match history pins job/profile/preference revisions. Skills coverage remains separately labeled.
-6. Inspect a job to review mandatory/preferred/unclear wording and hard-filter flags. Missing skill confirmation never proves absence; preferred Java never rejects and undisclosed salary remains unknown.
-7. Use **Run now** for local scheduled processing, or **Run manual discovery** for permitted Himalayas/Remotive/Jobicy/Remote OK public APIs. Settings allows source toggles and tracked company filters. Each query runs once per Kolkata day with four requests/provider/day and 31-second spacing. New relevant jobs share the configurable daily cap with manual intake. See [source permission review](docs/SOURCES.md). No listing page is fetched.
-8. Review Today’s best matches, Save/Dismiss jobs, and open the exact returned original listing to apply manually. Prepare a truthful draft from your verified profile and chosen resume, review/edit/regenerate/save/discard versions in Application queue, and open the listing for manual submission. This never marks Applied.
+```sh
+docker compose --env-file .env.local stop
+```
 
-9. In Tracker, explicitly confirm an application you submitted yourself and its Kolkata date, record later statuses, notes, next steps and follow-ups. History remains immutable. Settings exports complete JSON or CSV tables; see [tracking](docs/TRACKING.md) and [private backup/restore](docs/BACKUP.md).
+### Set up your own workspace
 
-Nothing is submitted. Open original listing is a normal user-controlled link. Prepare application generates materials; Run now queues internal processing; manual discovery ingests permitted listings. Authorized submission is disabled with an explanation. See [application preparation and optional AI data handling](docs/PREPARATION.md).
+Orbit starts with an empty workspace. After the app is running:
+
+1. Open **Resume & profile** and enter your own details. You can upload a PDF or UTF-8 text resume (up to 5 MB), then review any proposed information and explicitly confirm what is accurate. Uploading a resume does not automatically verify facts.
+2. Add matching preferences and weights in **Settings**. Profile facts, preferences, and dates should reflect information you have checked.
+3. Add jobs in **Discover jobs** by pasting a public HTTPS URL, pasting the job description, or importing a supported CSV/JSON file. A URL is saved as a reference; Orbit does not fetch the listing page. For LinkedIn and Indeed, copy the details into Orbit yourself.
+4. Review job details and match explanations, save jobs you want to pursue, and prepare a draft when ready. Check every draft and fill any fields marked **Needs your input** yourself.
+5. Apply on the employer's site yourself. Then use **Tracker** to confirm that you submitted the application and record its status. Orbit never marks an application as Applied on its own.
+
+Your resume files are stored privately under the ignored `private/resumes` directory, outside the public web directory. Never commit `.env.local`, resumes, exports, or other personal data. See [docs/PROFILE.md](docs/PROFILE.md), [docs/INTAKE.md](docs/INTAKE.md), and [docs/BACKUP.md](docs/BACKUP.md) for details.
+
+## Optional AI assistance
+
+AI is off by default. Deterministic matching and standard application preparation work without an AI key. Optional preparation assistance supports OpenAI or a local Ollama instance; configure it only if you want it. Hosted OpenAI calls require an explicit model, API key, and `ORBIT_ALLOW_PAID_AI=true`. Ollama uses the fixed local endpoint `http://127.0.0.1:11434` and a model already available on your machine. No model is downloaded automatically.
+
+Configuration names and data-handling details are in [docs/OPERATIONS.md](docs/OPERATIONS.md) and [docs/PREPARATION.md](docs/PREPARATION.md). Optional AI adapters have not been verified against live providers; the normal local workflow does not depend on them.
 
 ## Checks
 
@@ -50,42 +78,25 @@ npm run typecheck
 npm test
 npm run test:db
 npm run build
-npm run test:clean-start # fresh isolated install/build/HTTP/restore acceptance
-npm run test:scheduler # disposable real local Inngest check; ports 3178/8288 must be free
 ```
 
-ESLint runs separately from the Next.js build. Unit/DOM tests cover navigation, confirmation/failure states, input/provenance validation, URLs, matching, filters, and Asia/Kolkata boundaries. Real integration tests use their own disposable PostgreSQL container and ignored temporary private storage, never the app database. Tests do not automate a browser or contact job listing pages.
+The database test command uses a disposable PostgreSQL container. Additional clean-start and scheduler checks are documented in [docs/OPERATIONS.md](docs/OPERATIONS.md).
 
-Prisma generation runs during postinstall, typecheck, and build. Generated clients are ignored. next/font fetches DM Sans/Geist Mono during build and serves them locally at runtime. Private/environment files are excluded from build tracing.
+## Current limitations
 
-## Review in your browser
+- Orbit is local-only and has no authentication or multi-user separation. Treat each local installation as private.
+- Applications are never submitted automatically; follow-ups are local reminders without notification delivery.
+- Resume support is PDF and UTF-8 TXT only. There is no DOCX/OCR support, resume removal/redaction interface, or exported replacement PDF for tailored resume emphasis.
+- Job description analysis uses a limited English rule set. Unknown profile or job details remain unknown and may need your input.
+- Public API discovery is limited to the sources listed above and currently requests at most the first 20 listings per query. Other sources may be added only after their official terms permit the intended use.
+- Optional AI providers have not been tested against live services.
 
-At 320px, 768px, and 1280px check navigation, form wrapping, job cards, sticky list headers, dialogs, and no horizontal overflow. Use Tab/Shift+Tab for visible focus, the skip link, More-sheet focus containment/Escape return, and job confirmation cancellation. Check that unsaved edits warn before leaving through navigation links or unloading. SPA history navigation remains unverified.
+More detail is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/OPERATIONS.md](docs/OPERATIONS.md), and [docs/SOURCES.md](docs/SOURCES.md).
 
-After entering your own verified skills, import a real description with manually supplied required skills. Check the matching/missing explanation, save and find it in Saved jobs, edit a revision, refresh filters, and confirm that dashboard counts reflect actual records. A LinkedIn/Indeed URL must never fetch its page. Applied must appear only after your explicit manual confirmation.
+## Contributing
 
-Manual visual/keyboard inspection was not performed in this tool session. DOM and HTTP checks do not replace it.
+Issues and pull requests are welcome. Please read [AGENTS.md](AGENTS.md) before changing the project; it contains required privacy, security, and source-compliance rules. In particular, do not add job-site scraping or application-submission automation, and do not invent personal or employer facts. If you add or enable a job source, document its official permission and use limits in `docs/SOURCES.md` first.
 
-## Limits
+## License
 
-PDF/TXT only; local bounded extraction with human review, no DOCX/OCR. Requirement classification uses a bounded English rule vocabulary. No resume removal/redaction UI yet. CSV and JSON imports support the documented fields. Lists sort and score-filter within the 1,000 most recent records matching database filters; manual match refresh handles up to 200 recent unarchived jobs; daily processing checks all unarchived jobs in cursor batches. Missing job/profile information requires your input. Authorized submissions remain disabled. Local scheduling requires Orbit, PostgreSQL and the Inngest dev server to stay running. Tracking follow-ups are local reminders with no notification delivery. Buffered export is intended for a local workspace; use pg_dump for large backups. Optional AI adapters are implemented but real-provider untested; default preparation is deterministic. Resume emphasis is a selection/order display, not an exported replacement PDF. Discovery currently requests only the first 20 records per query. ATS board ingestion and credentialed Adzuna/Jooble adapters remain disabled where permission/configuration is unresolved. Unknown salary fields, unsupported pay periods and free-form Remotive salary text are not guessed.
-
-Production dependencies audit clean. Five high-severity entries remain in the development lint chain (eslint-config-next → Next lint plugin → fast-glob → micromatch → braces); npm has no compatible patch. ESLint 9.39.5 remains required by current plugin peer ranges despite its deprecation. Scoped Prisma-tooling overrides are explained in docs/DATABASE.md and verified through real generation/migration tests.
-
-## Architecture and operations
-
-See [architecture and operation boundaries](docs/ARCHITECTURE.md), [environment, commands and troubleshooting](docs/OPERATIONS.md), and [Phase 9 verification report](docs/PHASE-9-REPORT.md). Clean-start acceptance installs dependencies in a temporary checkout and checks an isolated database; it never overwrites the normal workspace.
-
-## Reports and project map
-
-- [Phase 2 database report](docs/PHASE-2.md)
-- [Phase 3 resume/profile report](docs/PHASE-3.md)
-- [Phase 4 intake/matching report](docs/PHASE-4.md)
-- [Private profile details](docs/PROFILE.md)
-- [Source register](docs/SOURCES.md)
-- `src/app`: routes, server actions, private attachment download, loading/error states.
-- `src/lib`: server-only storage/database services, Zod contracts, provenance, filters, matching, and time helpers.
-- `prisma`: schema and migrations; `scripts`: local setup/disposable tests.
-- `tests`: unit/DOM and real database checks.
-
-DESIGN.md records the existing design system; Phase 9 makes no screen or theme changes. AGENTS.md remains the compliance/truth/security contract. The user approved the Phase 7 tracking model and implementation. Phase boundaries still require a report and approval before proceeding. Prior instructions request a push after each completed phase and a fresh context for the next phase. Model/source decisions and phase checks remain documented. See [Phase 4 report](docs/PHASE-4-WEIGHTED-REPORT.md), [Phase 5 report](docs/PHASE-5-REPORT.md), [Phase 6 report](docs/PHASE-6-REPORT.md), [Phase 7 report](docs/PHASE-7-REPORT.md), and [next-context handoff](docs/NEXT-CONTEXT.md).
+No project license is currently provided. Until a license is added, do not assume that the code may be reused, modified, or redistributed under an open-source license.

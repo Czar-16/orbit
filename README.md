@@ -1,6 +1,6 @@
 # Orbit
 
-Local job application workspace through Phase 8. Private resumes, user-verified profiles, manual intake, seven-category deterministic matching, editable preferences, saved jobs, and permitted public-API discovery work locally without an AI key. Versioned application preparation/review works without AI; manual application tracking, notes, follow-ups and complete JSON/CSV export are available. Local Inngest daily scheduling, startup catch-up, bounded retries and daily processing summaries are available.
+Local job application workspace through Phase 9. Private resumes, user-verified profiles, manual intake, seven-category deterministic matching, editable preferences, saved jobs, and permitted public-API discovery work locally without an AI key. Versioned application preparation/review works without AI; manual application tracking, notes, follow-ups and complete JSON/CSV export are available. Local Inngest daily scheduling, startup catch-up, bounded retries and daily processing summaries are available.
 
 ## Setup
 
@@ -50,12 +50,13 @@ npm run typecheck
 npm test
 npm run test:db
 npm run build
+npm run test:clean-start # fresh isolated install/build/HTTP/restore acceptance
 npm run test:scheduler # disposable real local Inngest check; ports 3178/8288 must be free
 ```
 
 ESLint runs separately from the Next.js build. Unit/DOM tests cover navigation, confirmation/failure states, input/provenance validation, URLs, matching, filters, and Asia/Kolkata boundaries. Real integration tests use their own disposable PostgreSQL container and ignored temporary private storage, never the app database. Tests do not automate a browser or contact job listing pages.
 
-Prisma generation runs during postinstall, typecheck, and build. Generated clients are ignored. next/font fetches Geist Sans/Mono during build and serves them locally at runtime. Private/environment files are excluded from build tracing.
+Prisma generation runs during postinstall, typecheck, and build. Generated clients are ignored. next/font fetches DM Sans/Geist Mono during build and serves them locally at runtime. Private/environment files are excluded from build tracing.
 
 ## Review in your browser
 
@@ -71,6 +72,10 @@ PDF/TXT only; local bounded extraction with human review, no DOCX/OCR. Requireme
 
 Production dependencies audit clean. Five high-severity entries remain in the development lint chain (eslint-config-next → Next lint plugin → fast-glob → micromatch → braces); npm has no compatible patch. ESLint 9.39.5 remains required by current plugin peer ranges despite its deprecation. Scoped Prisma-tooling overrides are explained in docs/DATABASE.md and verified through real generation/migration tests.
 
+## Architecture and operations
+
+See [architecture and operation boundaries](docs/ARCHITECTURE.md), [environment, commands and troubleshooting](docs/OPERATIONS.md), and [Phase 9 verification report](docs/PHASE-9-REPORT.md). Clean-start acceptance installs dependencies in a temporary checkout and checks an isolated database; it never overwrites the normal workspace.
+
 ## Reports and project map
 
 - [Phase 2 database report](docs/PHASE-2.md)
@@ -83,4 +88,4 @@ Production dependencies audit clean. Five high-severity entries remain in the de
 - `prisma`: schema and migrations; `scripts`: local setup/disposable tests.
 - `tests`: unit/DOM and real database checks.
 
-DESIGN.md remains the AMOLED UI contract. AGENTS.md remains the compliance/truth/security contract. The user approved the Phase 7 tracking model and implementation. Phase boundaries still require a report and approval before proceeding. Prior instructions request a push after each completed phase and a fresh context for the next phase. Model/source decisions and phase checks remain documented. See [Phase 4 report](docs/PHASE-4-WEIGHTED-REPORT.md), [Phase 5 report](docs/PHASE-5-REPORT.md), [Phase 6 report](docs/PHASE-6-REPORT.md), [Phase 7 report](docs/PHASE-7-REPORT.md), and [next-context handoff](docs/NEXT-CONTEXT.md).
+DESIGN.md records the existing design system; Phase 9 makes no screen or theme changes. AGENTS.md remains the compliance/truth/security contract. The user approved the Phase 7 tracking model and implementation. Phase boundaries still require a report and approval before proceeding. Prior instructions request a push after each completed phase and a fresh context for the next phase. Model/source decisions and phase checks remain documented. See [Phase 4 report](docs/PHASE-4-WEIGHTED-REPORT.md), [Phase 5 report](docs/PHASE-5-REPORT.md), [Phase 6 report](docs/PHASE-6-REPORT.md), [Phase 7 report](docs/PHASE-7-REPORT.md), and [next-context handoff](docs/NEXT-CONTEXT.md).

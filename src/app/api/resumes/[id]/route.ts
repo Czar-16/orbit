@@ -1,14 +1,14 @@
 import { z } from "zod";
 import { requireWorkspace } from "@/lib/db";
 import { readResume } from "@/lib/resume-storage";
+import { localExportRequest } from "@/lib/export-format";
 export const runtime = "nodejs";
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const host = request.headers.get("host") ?? "";
-  if (!/^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(host))
-    return new Response("Local access only", { status: 403 });
+  if (!localExportRequest(request))
+    return new Response("Local same-origin access only", { status: 403 });
   const parsed = z.object({ id: z.uuid() }).safeParse(await params);
   if (!parsed.success) return new Response("Resume not found", { status: 404 });
   try {
@@ -29,7 +29,7 @@ export async function GET(
   } catch {
     return new Response(
       "Resume could not be read. Check local storage and database setup.",
-      { status: 503 },
+      { status: 503, headers: { "Cache-Control": "private, no-store" } },
     );
   }
 }

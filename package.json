@@ -16,7 +16,8 @@
     "db:migrate": "prisma migrate deploy",
     "test:db": "tsx scripts/test-db.ts",
     "inngest:dev": "inngest-cli dev --host 127.0.0.1 --no-discovery -u http://127.0.0.1:3000/api/inngest --persist",
-    "test:scheduler": "tsx scripts/test-scheduler.ts"
+    "test:scheduler": "tsx scripts/test-scheduler.ts",
+    "test:clean-start": "tsx scripts/test-clean-start.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",

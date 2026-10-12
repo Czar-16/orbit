@@ -1,9 +1,20 @@
 import type { Config } from "tailwindcss";
 export default {
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
         bg: "var(--bg)",
+        "text-label": "var(--text-label)",
+        "accent-text": "var(--accent-text)",
+        "on-accent": "var(--on-accent)",
+        "accent-soft-text": "var(--accent-soft-text)",
+        "success-border": "var(--success-border)",
+        "warning-border": "var(--warning-border)",
+        "danger-border": "var(--danger-border)",
+        "info-border": "var(--info-border)",
+        "overlay": "var(--overlay)",
+
         surface: "var(--surface)",
         "surface-2": "var(--surface-2)",
         "surface-3": "var(--surface-3)",
@@ -25,7 +36,7 @@ export default {
         "info-soft": "var(--info-soft)",
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "sans-serif"],
+        sans: ["var(--font-dm-sans)", "sans-serif"],
         mono: ["var(--font-geist-mono)", "monospace"],
       },
     },

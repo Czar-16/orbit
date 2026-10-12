@@ -1,26 +1,68 @@
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
+@custom-variant dark (&:where(.dark, .dark *));
 :root {
-  --bg: #000000;
-  --surface: #0a0a0b;
-  --surface-2: #111113;
-  --surface-3: #18181b;
-  --border: #1f1f23;
-  --border-strong: #2e2e34;
-  --text: #ededef;
-  --text-muted: #a1a1aa;
-  --text-subtle: #71717a;
-  --accent: #6366f1;
-  --accent-hover: #7c7ff5;
-  --accent-soft: rgba(99, 102, 241, 0.12);
-  --success: #22c55e;
-  --success-soft: rgba(34, 197, 94, 0.12);
-  --warning: #f59e0b;
-  --warning-soft: rgba(245, 158, 11, 0.12);
-  --danger: #ef4444;
-  --danger-soft: rgba(239, 68, 68, 0.12);
-  --info: #38bdf8;
-  --info-soft: rgba(56, 189, 248, 0.12);
+  --bg: #F5F4EF;
+  --surface: #FFFFFF;
+  --surface-2: #F5F4EF;
+  --surface-3: #ECEAE4;
+  --border: #D9D6CC;
+  --border-strong: #B9B5A8;
+  --text: #17191F;
+  --text-muted: #4A505C;
+  --text-label: #3B414D;
+  --text-subtle: #6B7180;
+  --accent: #2F33C9;
+  --accent-hover: #2025A8;
+  --accent-text: #2025A8;
+  --on-accent: #FFFFFF;
+  --accent-soft: #E8E9FB;
+  --accent-soft-text: #2025A8;
+  --success: #0F6B3E;
+  --success-soft: #E3F3EA;
+  --success-border: #A7D4B8;
+  --warning: #7A4100;
+  --warning-soft: #FFF0D1;
+  --warning-border: #E6C98A;
+  --danger: #B42318;
+  --danger-soft: #FDECEA;
+  --danger-border: #F2B8B2;
+  --info: #0B5CAD;
+  --info-soft: #E3F0FB;
+  --info-border: #A9CBEC;
+  --overlay: rgb(14 16 21 / 60%);
+  color-scheme: light;
+}
+.dark {
+  --bg: #0E1015;
+  --surface: #181B23;
+  --surface-2: #0E1015;
+  --surface-3: #232731;
+  --border: #343945;
+  --border-strong: #5A6070;
+  --text: #F2F3F7;
+  --text-muted: #B4BAC7;
+  --text-label: #C9CEDA;
+  --text-subtle: #8A90A0;
+  --accent: #8A90FF;
+  --accent-hover: #A3A8FF;
+  --accent-text: #B5B9FF;
+  --on-accent: #0E1015;
+  --accent-soft: #262A5E;
+  --accent-soft-text: #D5D8FF;
+  --success: #7BE0A8;
+  --success-soft: #12362A;
+  --success-border: #2E6B4D;
+  --warning: #FFC966;
+  --warning-soft: #3D2C0A;
+  --warning-border: #7A5B1E;
+  --danger: #FF9A91;
+  --danger-soft: #3A1512;
+  --danger-border: #7A2E28;
+  --info: #7CC4FF;
+  --info-soft: #11283A;
+  --info-border: #2C5878;
+  --overlay: rgb(14 16 21 / 60%);
   color-scheme: dark;
 }
 * {
@@ -30,8 +72,8 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-geist-sans, sans-serif);
-  font-size: 14px;
+  font-family: var(--font-dm-sans, sans-serif);
+  font-size: 16px;
   line-height: 1.5;
 }
 button,
@@ -46,14 +88,14 @@ button {
   outline-offset: 2px;
 }
 h1 {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 32px;
+  font-weight: 700;
   letter-spacing: -0.01em;
   overflow-wrap: anywhere;
 }
 h2 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
 }
 .app-shell {
   --sidebar-width: 240px;
@@ -145,7 +187,7 @@ h2 {
   padding: 4px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-muted);
 }
 .content {
@@ -177,14 +219,14 @@ h2 {
   padding: 16px;
 }
 .metric h2 {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 400;
   color: var(--text-muted);
 }
 .metric-value {
   font:
-    600 28px/1.3 var(--font-geist-mono),
-    monospace;
+    700 40px/1.3 var(--font-dm-sans),
+    sans-serif;
   margin: 12px 0;
   overflow-wrap: anywhere;
 }
@@ -203,7 +245,7 @@ h2 {
 }
 .setup-banner p {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 14px;
   margin-top: 4px;
 }
 .setup-banner a {
@@ -229,7 +271,7 @@ h2 {
   max-width: 70ch;
 }
 .phase-badge {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-muted);
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -240,7 +282,7 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 14px;
   padding: 2px 6px;
   border: 1px dashed var(--border-strong);
   border-radius: 6px;
@@ -258,14 +300,14 @@ h2 {
   align-items: start;
 }
 .settings-list dd p {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-muted);
   margin-top: 4px;
 }
 .availability-note {
   margin-top: 24px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 .bottom-nav {
   display: none;
@@ -357,7 +399,7 @@ h2 {
     flex-direction: column;
     gap: 4px;
     padding: 4px 0;
-    font-size: 11px;
+    font-size: 14px;
     min-height: 48px;
   }
   .dashboard-grid {
@@ -426,12 +468,12 @@ h2 {
 }
 .field-hint {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-muted);
 }
 .field-error {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--danger);
 }
 @media (max-width: 767px) {
@@ -446,3 +488,10 @@ h2 {
 .job-card:hover {
   border-color: var(--border-strong);
 }
+
+/* Scores and statistics stay aligned in the UI font. */
+body { font-variant-numeric: tabular-nums; }
+.theme-options { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.theme-option { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--border-strong); border-radius: 10px; background: var(--surface-2); cursor: pointer; }
+.theme-option:has(:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-soft-text); }
+.theme-option input { accent-color: var(--accent); width: 20px; height: 20px; }

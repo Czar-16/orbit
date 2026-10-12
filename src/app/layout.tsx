@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { databaseStatus } from "@/lib/db";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/app-shell";
+import { themeBootstrapScript } from "@/lib/theme";
+import { ThemeController } from "@/components/theme-controller";
 import "./globals.css";
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
+const sans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 export const metadata: Metadata = {
   title: {
@@ -21,8 +23,10 @@ export default async function RootLayout({
 }) {
   const status = await databaseStatus();
   return (
-    <html lang="en" className="dark">
-      <body className={`${geist.variable} ${mono.variable}`}>
+    <html lang="en" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} /></head>
+      <body className={`${sans.variable} ${mono.variable}`}>
+        <ThemeController />
         <AppShell importAvailable={status.state === "ready"}>
           {children}
         </AppShell>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemePreferenceControl } from "@/components/theme-controller";
 import { exportEntities } from "@/lib/data-export";
 import type { Metadata } from "next";
 import { validateEnvironment } from "@/lib/env";
@@ -32,7 +33,8 @@ export default async function Settings() {
         <h1>Settings</h1>
         <p>Current setup and availability.</p>
       </div>
-      <section className="panel">
+      <ThemePreferenceControl />
+      <section className="panel mt-4">
         <h2 className="mb-4">Workspace configuration</h2>
         <dl className="settings-list">
           {[

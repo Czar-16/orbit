@@ -1,5 +1,7 @@
 "use client";
 import "./globals.css";
+import { themeBootstrapScript } from "@/lib/theme";
+import { ThemeController } from "@/components/theme-controller";
 export default function GlobalError({
   reset,
 }: {
@@ -7,8 +9,10 @@ export default function GlobalError({
   reset: () => void;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} /></head>
       <body className="p-6">
+        <ThemeController />
         <h1>Orbit could not load</h1>
         <p>
           Try again. If the problem continues, restart Orbit and check the local

@@ -191,3 +191,11 @@ Review uses the standard panel/input/provenance tokens, a two-column desktop lay
 ### Application tracking and export (Phase 7)
 
 Tracker uses responsive panel lists, semantic status badges, URL-backed filters and a sticky count/pagination header. Applied confirmation/date are a dedicated form. Notes, next steps and follow-up labels/dates are explicitly User-provided. Event history paginates immutable records and labels migration/system/user origins. Pinned scores show inferred provenance, profile/preference version IDs and stale-state text. Archive, completion and cancellation require explicit confirmation. Dashboard numbers come from real queries; unavailable queries show Unavailable. Settings export links explain the private contents and offer JSON plus CSV tables without revealing internal file paths.
+
+### Redesign implementation: type and browser theme preference
+
+All readable text, including provenance pills and status badges, has a minimum size of 14px. This resolves the older 12px/13px badge specifications in sections 5, 6, and 9. UI text and statistics use DM Sans; tabular numbers align scores and counts. Geist Mono remains reserved for URLs, IDs, and code.
+
+The browser preference is Light / Dark / System, stored as `orbit.theme` in localStorage. Missing or invalid values select System. A head script resolves the theme before the body paints; the client controller follows system changes only in System mode and synchronizes preferences across tabs. If storage is blocked, manual choices still apply in the current tab. Settings exposes the control even without a database. This user-approved redesign supersedes the legacy dark-only theme rule in AGENTS.md; other project rules still apply.
+
+`--overlay` is the shared scrim token (`rgb(14 16 21 / 60%)` in both themes), for dialog and sheet backdrops. Section 3 semantic triplets use `--success`, `--success-soft`, `--success-border` and the same suffixes for warning, danger, and info. Callout bodies use primary text; semantic colors identify headings.

@@ -1,4 +1,5 @@
 import "server-only";
+import { invalidateReadiness } from "@/lib/tracking-service";
 import { requireWorkspace } from "@/lib/db";
 import { profileInputSchema, profileFactsFromInput } from "@/lib/profile-input";
 import { InputError } from "@/lib/action-result";
@@ -30,7 +31,7 @@ export async function saveProfile(input: unknown) {
           "The selected resume is no longer available. Choose an available version.",
         );
     }
-    return tx.profileVersion.create({
+    const saved = await tx.profileVersion.create({
       data: {
         workspaceId,
         revision: data.expectedRevision + 1,
@@ -38,5 +39,7 @@ export async function saveProfile(input: unknown) {
         resumeVersionId: data.resumeVersionId || null,
       },
     });
+    await invalidateReadiness(tx, workspaceId, "profile-changed", saved.id);
+    return saved;
   });
 }

@@ -1,4 +1,5 @@
 import "server-only";
+import { invalidateReadiness } from "@/lib/tracking-service";
 import { z } from "zod";
 import { requireWorkspace } from "@/lib/db";
 import { preferenceSchema, defaultPreferences } from "@/lib/preferences";
@@ -39,12 +40,14 @@ export async function savePreferences(input: unknown) {
       throw new InputError(
         "Preferences changed in another tab. Reload before saving.",
       );
-    return tx.preferenceVersion.create({
+    const saved = await tx.preferenceVersion.create({
       data: {
         workspaceId,
         revision: parsed.data.expectedRevision + 1,
         values: parsed.data.values,
       },
     });
+    await invalidateReadiness(tx, workspaceId, "preferences-changed", saved.id);
+    return saved;
   });
 }

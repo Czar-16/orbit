@@ -187,3 +187,7 @@ Job lists use the standard job-card layout at all widths, with URL-backed filter
 ### Application review (Phase 6)
 
 Review uses the standard panel/input/provenance tokens, a two-column desktop layout with a sticky context panel and a single column on mobile. A sticky notice always states that nothing has been submitted. Resume emphasis compares numbered verbatim eligible project bullets with the selected order; omitted bullets are listed explicitly. Unknown answers use a dashed warning border and empty editable fields. Every saved edit is an explicit revision; there is no autosave claim. Historical and discarded revisions are read-only. Optional-provider configuration is described as configured/untested, never connected by inference.
+
+### Application tracking and export (Phase 7)
+
+Tracker uses responsive panel lists, semantic status badges, URL-backed filters and a sticky count/pagination header. Applied confirmation/date are a dedicated form. Notes, next steps and follow-up labels/dates are explicitly User-provided. Event history paginates immutable records and labels migration/system/user origins. Pinned scores show inferred provenance, profile/preference version IDs and stale-state text. Archive, completion and cancellation require explicit confirmation. Dashboard numbers come from real queries; unavailable queries show Unavailable. Settings export links explain the private contents and offer JSON plus CSV tables without revealing internal file paths.

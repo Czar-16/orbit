@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { exportEntities } from "@/lib/data-export";
 import type { Metadata } from "next";
 import { validateEnvironment } from "@/lib/env";
 import { databaseStatus, requireWorkspace } from "@/lib/db";
@@ -59,7 +61,7 @@ export default async function Settings() {
               label: "Daily activity timezone",
               value: "Asia/Kolkata",
               detail:
-                "Future daily limits and follow-up dates use this timezone; timestamps will be stored in UTC.",
+                "Daily limits and follow-up dates use this timezone; timestamps are stored in UTC.",
             },
           ].map((item) => (
             <div key={item.label}>
@@ -109,6 +111,39 @@ export default async function Settings() {
         ) : (
           <p className="mt-4 text-sm">No provider requests recorded.</p>
         )}
+      </section>
+      <section id="data-export" className="panel mt-4">
+        <h2>Export and backup</h2>
+        <p className="mt-2 text-sm text-text-muted">
+          Exports contain private profile facts, answers and history. Store them
+          privately. Original resume bytes and internal storage paths are
+          excluded; download resumes separately from Profile. No restore is
+          performed by export.
+        </p>
+        <Link
+          href="/api/export?format=json"
+          className="inline-flex min-h-11 items-center underline"
+        >
+          Download all data as JSON
+        </Link>
+        <h3 className="mt-4 text-sm">
+          CSV tables (nested values are JSON cells)
+        </h3>
+        <div className="mt-2 flex flex-wrap gap-x-4">
+          {exportEntities.map((entity) => (
+            <Link
+              key={entity}
+              href={`/api/export?format=csv&entity=${entity}`}
+              className="inline-flex min-h-11 items-center underline text-sm"
+            >
+              {entity}
+            </Link>
+          ))}
+        </div>
+        <p className="field-hint">
+          Full database and private-resume backup instructions: docs/BACKUP.md
+          in the project. Empty CSV tables contain no data rows.
+        </p>
       </section>
       {preferences && (
         <section className="panel mt-4">

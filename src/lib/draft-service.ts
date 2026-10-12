@@ -1,4 +1,5 @@
 import "server-only";
+import { trackDraft } from "@/lib/tracking-service";
 import { z } from "zod";
 import { requireWorkspace } from "@/lib/db";
 import { profileFactsSchema } from "@/lib/profile-schema";
@@ -159,7 +160,7 @@ export async function prepareDraft(input: unknown) {
       (await tx.preferenceVersion.create({
         data: { workspaceId, revision: 1, values, origin: "defaults" },
       }));
-    return tx.applicationDraft.create({
+    const saved = await tx.applicationDraft.create({
       data: {
         workspaceId,
         jobId: job.id,
@@ -173,6 +174,8 @@ export async function prepareDraft(input: unknown) {
         content,
       },
     });
+    await trackDraft(tx, saved);
+    return saved;
   });
 }
 const editSchema = z
@@ -252,7 +255,7 @@ export async function reviseDraft(input: unknown) {
         "Emphasis must select unique existing bullet numbers; answers and letter must fit the displayed limits.",
       );
     const valid = parsedContent.data;
-    return tx.applicationDraft.create({
+    const saved = await tx.applicationDraft.create({
       data: {
         workspaceId,
         jobId: draft.jobId,
@@ -265,5 +268,7 @@ export async function reviseDraft(input: unknown) {
         content: valid,
       },
     });
+    await trackDraft(tx, saved);
+    return saved;
   });
 }

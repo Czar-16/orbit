@@ -1,4 +1,9 @@
 import "server-only";
+import {
+  ensureTracking,
+  trackJobState,
+  appendTrackingEvent,
+} from "@/lib/tracking-service";
 import { createHash } from "node:crypto";
 import { requireWorkspace } from "@/lib/db";
 import type { JobRevision } from "@/generated/prisma/client";
@@ -94,7 +99,13 @@ async function recordMatch(
     where: { workspaceId },
     orderBy: { revision: "desc" },
   });
-  if (!profile) return;
+  if (!profile) {
+    await tx.application.updateMany({
+      where: { workspaceId, jobId: revision.jobId, selectedDraftId: null },
+      data: { matchScore: null, matchSnapshot: Prisma.DbNull },
+    });
+    return;
+  }
   const explanation = matchSkills(
     revision.skills,
     profileFactsSchema.parse(profile.facts),
@@ -132,6 +143,26 @@ async function recordMatch(
       update: {},
     });
   }
+  const latest = await tx.weightedMatch.findFirst({
+    where: { workspaceId, jobRevisionId: revision.id },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  });
+  await tx.application.updateMany({
+    where: { workspaceId, jobId: revision.jobId, selectedDraftId: null },
+    data: {
+      matchScore: latest?.score ?? null,
+      matchSnapshot: latest
+        ? {
+            kind: "recorded-match",
+            id: latest.id,
+            jobRevisionId: latest.jobRevisionId,
+            profileVersionId: latest.profileVersionId,
+            preferenceVersionId: latest.preferenceVersionId,
+            ruleVersion: latest.ruleVersion,
+          }
+        : Prisma.DbNull,
+    },
+  });
   await tx.matchResult.upsert({
     where: {
       workspaceId_jobRevisionId_profileVersionId_ruleVersion: {
@@ -307,6 +338,7 @@ export async function importJobs(
           where: { id: job.id },
           data: { latestRevisionNumber: 1 },
         });
+        await ensureTracking(tx, workspaceId, job.id);
         await recordMatch(tx, workspaceId, revision);
         imported++;
         if (relevant) relevantCount++;
@@ -429,6 +461,16 @@ export async function saveJob(input: unknown, resolver?: AddressResolver) {
         latestRevisionNumber: revision,
       },
     });
+    const tracking = await ensureTracking(tx, workspaceId, job.id);
+    if (existing)
+      await appendTrackingEvent(
+        tx,
+        tracking,
+        "job-revised",
+        "user-provided",
+        tracking.status === "READY_TO_APPLY" ? { status: "NEEDS_REVIEW" } : {},
+        { jobRevisionId: created.id },
+      );
     await recordMatch(tx, workspaceId, created);
     return { jobId: job.id, duplicate: false, revision };
   });
@@ -455,12 +497,16 @@ export async function setJobState(input: unknown) {
           : operation === "archive"
             ? { archivedAt: new Date(), savedAt: null }
             : { dismissedAt: null, archivedAt: null };
-  const result = await database.job.updateMany({
-    where: { workspaceId, id: data.data.id },
-    data: update,
+  await database.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "Workspace" WHERE id=${workspaceId}::uuid FOR UPDATE`;
+    const result = await tx.job.updateMany({
+      where: { workspaceId, id: data.data.id },
+      data: update,
+    });
+    if (result.count !== 1)
+      throw new InputError("This job is unavailable in your workspace.");
+    await trackJobState(tx, workspaceId, data.data.id, operation);
   });
-  if (result.count !== 1)
-    throw new InputError("This job is unavailable in your workspace.");
 }
 export async function refreshMatches() {
   const { database, workspaceId } = await requireWorkspace();
@@ -482,9 +528,14 @@ export async function refreshMatches() {
   for (const job of jobs) {
     const revision = job.latestRevision;
     if (revision) {
-      await database.$transaction((tx) =>
-        recordMatch(tx, workspaceId, revision),
-      );
+      await database.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM "Workspace" WHERE id=${workspaceId}::uuid FOR UPDATE`;
+        const current = await tx.job.findFirst({
+          where: { workspaceId, id: job.id },
+        });
+        if (current?.latestRevisionNumber === revision.revision)
+          await recordMatch(tx, workspaceId, revision);
+      });
       updated++;
     }
   }

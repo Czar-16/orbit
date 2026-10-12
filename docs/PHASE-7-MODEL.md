@@ -1,16 +1,16 @@
 # Phase 7 tracking proposal
 
-Status: proposed on 2026-10-12; awaiting model approval under PROMPT.md section 13. Phase 6 is already committed and pushed as 7b92c32. This document starts Phase 7; it does not implement tracking or authorize schema changes.
+Status: approved by the user (“yes proceed”) on 2026-10-12 and implemented in Phase 7. Phase 6 is committed/pushed as 7b92c32. See PHASE-7-REPORT.md and TRACKING.md for the delivered behavior and validation.
 
 ## Models and relations
 
 Retain the existing local Workspace, Job, immutable JobRevision and ApplicationDraft models. Add three workspace-owned models with restrictive deletion and composite foreign keys to prevent cross-workspace links:
 
-| Model | Fields and purpose | Relations and constraints |
-| --- | --- | --- |
-| Application | UUID; workspaceId; jobId; status; revision counter; selected draft ID (nullable); appliedAt (nullable UTC timestamp); applied provenance/confirmation time (nullable until manually confirmed); nextStep (nullable user-provided text); createdAt/updatedAt | One application per workspace/job. References its own Job and, when selected, a draft belonging to that same workspace/job. Index workspace/status/update time and applied date. |
-| ApplicationEvent | UUID; workspaceId; applicationId; sequence; kind; previous/new status (nullable for notes); bounded note/validated details; origin; occurredAt (UTC); recordedAt (UTC) | Append-only history, unique application/sequence. References the application in the same workspace. Index workspace/recordedAt. An event and its state update commit atomically. User notes are user-provided, never employer-verified. |
-| FollowUp | UUID; workspaceId; applicationId; bounded label; dueAt; completedAt/cancelledAt (nullable); revision counter; createdAt/updatedAt | References the application in the same workspace. Due dates are selected as Asia/Kolkata calendar dates and stored as UTC instants at local midnight. Completion and cancellation are mutually exclusive. Index workspace/dueAt and application. Every change appends an application event. |
+| Model            | Fields and purpose                                                                                                                                                                                                                                          | Relations and constraints                                                                                                                                                                                                                                                                   |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Application      | UUID; workspaceId; jobId; status; revision counter; selected draft ID (nullable); appliedAt (nullable UTC timestamp); applied provenance/confirmation time (nullable until manually confirmed); nextStep (nullable user-provided text); createdAt/updatedAt | One application per workspace/job. References its own Job and, when selected, a draft belonging to that same workspace/job. Index workspace/status/update time and applied date.                                                                                                            |
+| ApplicationEvent | UUID; workspaceId; applicationId; sequence; kind; previous/new status (nullable for notes); bounded note/validated details; origin; occurredAt (UTC); recordedAt (UTC)                                                                                      | Append-only history, unique application/sequence. References the application in the same workspace. Index workspace/recordedAt. An event and its state update commit atomically. User notes are user-provided, never employer-verified.                                                     |
+| FollowUp         | UUID; workspaceId; applicationId; bounded label; dueAt; completedAt/cancelledAt (nullable); revision counter; createdAt/updatedAt                                                                                                                           | References the application in the same workspace. Due dates are selected as Asia/Kolkata calendar dates and stored as UTC instants at local midnight. Completion and cancellation are mutually exclusive. Index workspace/dueAt and application. Every change appends an application event. |
 
 All external action, filter and export inputs use strict server-side Zod validation. No credentials, new services, external submission API or personal-fact inference is introduced. SQL constraints enforce status/date/confirmation consistency, positive revisions, ownership and append-only events. Transactional workspace locks and expected revision checks reject stale/concurrent updates. Retries of stale commands require reload rather than repeating an action silently.
 
@@ -18,19 +18,19 @@ All external action, filter and export inputs use strict server-side Zod validat
 
 The initial proposed transition graph is:
 
-| Current | Allowed next states |
-| --- | --- |
-| Discovered | Saved, Needs Review, Draft Ready, Applied, Archived |
-| Saved | Discovered, Needs Review, Draft Ready, Applied, Archived |
-| Needs Review | Discovered, Saved, Draft Ready, Applied, Archived |
-| Draft Ready | Needs Review, Ready to Apply, Applied, Archived |
-| Ready to Apply | Needs Review, Draft Ready, Applied, Archived |
-| Applied | Interview, Offer, Rejected, Withdrawn, Archived |
-| Interview | Offer, Rejected, Withdrawn, Archived |
-| Offer | Withdrawn, Archived |
-| Rejected | Archived |
-| Withdrawn | Archived |
-| Archived | Explicit restore to the recorded previous state |
+| Current        | Allowed next states                                      |
+| -------------- | -------------------------------------------------------- |
+| Discovered     | Saved, Needs Review, Draft Ready, Applied, Archived      |
+| Saved          | Discovered, Needs Review, Draft Ready, Applied, Archived |
+| Needs Review   | Discovered, Saved, Draft Ready, Applied, Archived        |
+| Draft Ready    | Needs Review, Ready to Apply, Applied, Archived          |
+| Ready to Apply | Needs Review, Draft Ready, Applied, Archived             |
+| Applied        | Interview, Offer, Rejected, Withdrawn, Archived          |
+| Interview      | Offer, Rejected, Withdrawn, Archived                     |
+| Offer          | Withdrawn, Archived                                      |
+| Rejected       | Archived                                                 |
+| Withdrawn      | Archived                                                 |
+| Archived       | Explicit restore to the recorded previous state          |
 
 Mark as applied is a dedicated manual command, requiring an explicit confirmation and a user-selected application date that is not in the future in Asia/Kolkata. It is available without a draft because the user may have applied outside this app. Interview/Offer require a prior confirmed application. Applied date and original confirmation remain preserved in subsequent statuses and archived records. No opening-link action writes application state. No authorized integration is added.
 
@@ -54,4 +54,10 @@ Provide local-only JSON export covering workspace configuration, verified profil
 
 After approval, implement the schema/migration, pure transition/input rules, transactional services, UI/dashboard/export, then test valid/invalid transitions, absent/manual confirmation, future dates, draft readiness, stale/concurrent requests, ownership, append-only history, backfill, Kolkata boundaries, archived restoration, filtering, accurate counts and export completeness/formula escaping. Real DB tests run only against disposable PostgreSQL; no sample personal data enters the normal database.
 
-Run lint, typecheck, unit/DOM tests, DB tests and build; document results and limitations; commit/push the completed Phase 7; stop before Phase 8. No Phase 7 schema, migration or runtime implementation is included in this proposal subphase.
+Run lint, typecheck, unit/DOM tests, DB tests and build; document results and limitations; commit/push the completed Phase 7; stop before Phase 8. The approved proposal is implemented by migration 202610120009_tracking and the tracking/query/export services. Phase 8 remains separate.
+
+## Implementation refinements
+
+Application additionally stores nullable derived matchScore/matchSnapshot fields so exact pinned-score filters run in PostgreSQL before pagination. These cache existing draft/recorded-match evidence with version IDs; they never create employer facts. A discarded pre-application draft switches to the latest recorded-match projection. Archive restore uses the recorded previous status but rechecks draft availability/currency/readiness; a failed recheck returns Needs review and preserves the recorded previous status in the restore event. This prevents stale or discarded materials from regaining readiness. All displayed unanswered questions block Ready to apply; unknown/sensitive answers must never be invented to clear this gate.
+
+Saved profile/preferences changes and dismissal invalidate pre-application Ready to apply in the same workspace-locked transaction, appending an event while preserving the pinned evidence. Confirmed application history is unaffected.

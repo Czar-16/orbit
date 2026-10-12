@@ -5,18 +5,20 @@ import { todayInterval } from "@/lib/time";
 import { queryJobs } from "@/lib/job-query";
 import { defaultFilters } from "@/lib/job-filters";
 import { JobCard } from "@/components/job-card";
-import { Unavailable } from "@/components/unavailable";
+import { trackingMetrics } from "@/lib/tracker-query";
+import { ApplicationStatusBadge } from "@/components/application-status";
 export const dynamic = "force-dynamic";
 export default async function Dashboard() {
   const status = await databaseStatus();
   let importedToday: number | null = null;
   let savedJobs: number | null = null;
   let preparedCount: number | null = null;
+  let tracking: Awaited<ReturnType<typeof trackingMetrics>> | null = null;
   if (status.state === "ready") {
     try {
       const { database, workspaceId } = await requireWorkspace();
       const day = todayInterval();
-      [importedToday, savedJobs, preparedCount] = await Promise.all([
+      [importedToday, savedJobs, preparedCount, tracking] = await Promise.all([
         database.job.count({
           where: { workspaceId, discoveredAt: { gte: day.start, lt: day.end } },
         }),
@@ -31,11 +33,13 @@ export default async function Dashboard() {
         database.applicationDraft.count({
           where: { workspaceId, operation: "prepare" },
         }),
+        trackingMetrics(),
       ]);
     } catch {
       importedToday = null;
       savedJobs = null;
       preparedCount = null;
+      tracking = null;
     }
   }
   const best =
@@ -67,8 +71,44 @@ export default async function Dashboard() {
     },
     {
       label: "Applications confirmed",
-      value: null,
-      caption: "Application tracking is enabled in a later phase.",
+      value: tracking?.applied ?? null,
+      caption:
+        "Manually confirmed submissions, including later statuses and archive.",
+    },
+    {
+      label: "Relevant jobs today",
+      value: tracking?.relevantToday ?? null,
+      caption: "Recorded relevant intake in Asia/Kolkata.",
+    },
+    {
+      label: "Awaiting review",
+      value: tracking?.review ?? null,
+      caption: "Applications currently marked Needs review.",
+    },
+    {
+      label: "Active drafts",
+      value: tracking?.prepared ?? null,
+      caption: "Unique jobs whose latest draft has not been discarded.",
+    },
+    {
+      label: "Current interviews",
+      value: tracking?.interviews ?? null,
+      caption: "Current Interview status.",
+    },
+    {
+      label: "Current rejections",
+      value: tracking?.rejections ?? null,
+      caption: "Current Rejected status.",
+    },
+    {
+      label: "Overdue follow-ups",
+      value: tracking?.overdue ?? null,
+      caption: "Pending follow-ups before today in Asia/Kolkata.",
+    },
+    {
+      label: "Upcoming follow-ups",
+      value: tracking?.upcoming ?? null,
+      caption: "Pending follow-ups from today through the next six days.",
     },
   ];
   return (
@@ -101,8 +141,7 @@ export default async function Dashboard() {
             <h2>{metric.label}</h2>
             <p className="metric-value">{metric.value ?? "Unavailable"}</p>
             <p className="text-xs text-text-muted">
-              {(metric.value === null && metric.label.startsWith("Jobs")) ||
-              (metric.value === null && metric.label === "Saved jobs")
+              {metric.value === null
                 ? "Requires a successful database query."
                 : metric.caption}
             </p>
@@ -126,11 +165,68 @@ export default async function Dashboard() {
         </section>
       )}
       <div className="dashboard-grid">
-        <Unavailable
-          title="Submission tracking is not enabled yet"
-          description="Review prepared materials in Application queue. Application status and follow-ups arrive in Phase 7."
-          phase="Application workflows"
-        />
+        <section className="panel space-y-4">
+          <h2>Recent activity</h2>
+          {!tracking ? (
+            <p className="text-sm text-text-muted">
+              Activity unavailable. Requires a successful database query.
+            </p>
+          ) : (
+            <>
+              {!tracking.events.length && (
+                <p className="text-sm text-text-muted">
+                  No tracking events recorded.
+                </p>
+              )}
+              {tracking.events.map((event) => (
+                <article
+                  key={event.id}
+                  className="border-b border-border pb-3 text-sm"
+                >
+                  <Link
+                    href={`/tracker/${event.applicationId}`}
+                    className="underline"
+                  >
+                    {event.application.job.latestRevision?.title ??
+                      "Unknown role"}
+                  </Link>
+                  <p>
+                    {event.kind.replaceAll("-", " ")} · {event.origin}
+                  </p>
+                  {event.newStatus && (
+                    <ApplicationStatusBadge status={event.newStatus} />
+                  )}
+                  <p className="field-hint">
+                    {event.recordedAt.toLocaleString("en-IN", {
+                      timeZone: "Asia/Kolkata",
+                    })}{" "}
+                    Asia/Kolkata
+                  </p>
+                </article>
+              ))}
+              <h3>Recent discovery runs</h3>
+              {!tracking.runs.length && (
+                <p className="text-sm text-text-muted">
+                  No discovery runs recorded.
+                </p>
+              )}
+              {tracking.runs.map((run) => (
+                <p key={run.id} className="text-sm">
+                  {run.source.label} · {run.day} · {run.state} · fetched{" "}
+                  {run.fetched}, imported {run.imported}, duplicates{" "}
+                  {run.duplicates}
+                  {run.error ? ` · ${run.error}` : ""}
+                </p>
+              ))}
+            </>
+          )}
+          <Link
+            href="/tracker"
+            className="inline-flex min-h-11 items-center underline text-sm"
+          >
+            Open application tracker
+          </Link>
+        </section>
         <section className="panel">
           <h2 className="mb-4 flex items-center gap-2">
             <ShieldCheck size={18} aria-hidden="true" />

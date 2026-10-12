@@ -37,6 +37,9 @@ model Workspace {
   discoveryRuns DiscoveryRun[]
   drafts ApplicationDraft[]
   outboundLogs OutboundDataLog[]
+  applications Application[]
+  applicationEvents ApplicationEvent[]
+  followUps FollowUp[]
 }
 model ResumeVersion {
   drafts ApplicationDraft[]
@@ -95,6 +98,7 @@ model Source {
   @@unique([workspaceId, id])
 }
 model Job {
+  application Application?
   drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
   workspaceId String @db.Uuid
@@ -226,6 +230,7 @@ model DiscoveryRun {
 }
 
 model ApplicationDraft {
+  selectedFor Application[]
   id String @id @default(uuid()) @db.Uuid
   workspaceId String @db.Uuid
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
@@ -245,6 +250,7 @@ model ApplicationDraft {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   @@unique([workspaceId, jobId, revision])
   @@unique([workspaceId, id])
+  @@unique([workspaceId, jobId, id])
   @@index([workspaceId, createdAt])
 }
 model OutboundDataLog {
@@ -259,4 +265,85 @@ model OutboundDataLog {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   finishedAt DateTime? @db.Timestamptz(3)
   @@index([workspaceId, createdAt])
+}
+
+enum ApplicationStatus {
+  DISCOVERED
+  SAVED
+  NEEDS_REVIEW
+  DRAFT_READY
+  READY_TO_APPLY
+  APPLIED
+  INTERVIEW
+  OFFER
+  REJECTED
+  WITHDRAWN
+  ARCHIVED
+}
+
+model Application {
+  id                String             @id @default(uuid()) @db.Uuid
+  workspaceId       String             @db.Uuid
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  jobId             String             @db.Uuid
+  job               Job                @relation(fields: [workspaceId, jobId], references: [workspaceId, id], onDelete: Restrict)
+  status            ApplicationStatus  @default(DISCOVERED)
+  previousStatus    ApplicationStatus?
+  revision          Int                @default(1)
+  selectedDraftId   String?            @db.Uuid
+  selectedDraft     ApplicationDraft?  @relation(fields: [workspaceId, jobId, selectedDraftId], references: [workspaceId, jobId, id], onDelete: Restrict)
+  appliedAt         DateTime?          @db.Timestamptz(3)
+  confirmedAt       DateTime?          @db.Timestamptz(3)
+  appliedProvenance String?
+  nextStep          String?
+  matchScore        Int?
+  matchSnapshot     Json?              @db.JsonB
+  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
+  events            ApplicationEvent[]
+  followUps         FollowUp[]
+
+  @@unique([workspaceId, jobId])
+  @@unique([workspaceId, id])
+  @@index([workspaceId, status, updatedAt])
+  @@index([workspaceId, appliedAt])
+}
+
+model ApplicationEvent {
+  id             String             @id @default(uuid()) @db.Uuid
+  workspaceId    String             @db.Uuid
+  workspace      Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  applicationId  String             @db.Uuid
+  application    Application        @relation(fields: [workspaceId, applicationId], references: [workspaceId, id], onDelete: Restrict)
+  sequence       Int
+  kind           String
+  previousStatus ApplicationStatus?
+  newStatus      ApplicationStatus?
+  note           String?
+  details        Json               @db.JsonB
+  origin         String
+  occurredAt     DateTime           @default(now()) @db.Timestamptz(3)
+  recordedAt     DateTime           @default(now()) @db.Timestamptz(3)
+
+  @@unique([workspaceId, applicationId, sequence])
+  @@index([workspaceId, recordedAt])
+}
+
+model FollowUp {
+  id            String      @id @default(uuid()) @db.Uuid
+  workspaceId   String      @db.Uuid
+  workspace     Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  applicationId String      @db.Uuid
+  application   Application @relation(fields: [workspaceId, applicationId], references: [workspaceId, id], onDelete: Restrict)
+  label         String
+  dueAt         DateTime    @db.Timestamptz(3)
+  completedAt   DateTime?   @db.Timestamptz(3)
+  cancelledAt   DateTime?   @db.Timestamptz(3)
+  revision      Int         @default(1)
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime    @updatedAt @db.Timestamptz(3)
+
+  @@unique([workspaceId, id])
+  @@index([workspaceId, dueAt])
+  @@index([workspaceId, applicationId])
 }

@@ -1,6 +1,6 @@
 # Orbit
 
-Local job application workspace through Phase 6. Private resumes, user-verified profiles, manual intake, seven-category deterministic matching, editable preferences, saved jobs, and permitted public-API discovery work locally without an AI key. Versioned application preparation/review works without AI; tracking (Phase 7) and scheduling (Phase 8) remain unavailable.
+Local job application workspace through Phase 7. Private resumes, user-verified profiles, manual intake, seven-category deterministic matching, editable preferences, saved jobs, and permitted public-API discovery work locally without an AI key. Versioned application preparation/review works without AI; manual application tracking, notes, follow-ups and complete JSON/CSV export are available. Scheduling (Phase 8) remains unavailable.
 
 ## Setup
 
@@ -36,6 +36,8 @@ Both app scripts bind to 127.0.0.1. No authentication is implemented; add real a
 7. Use **Run discovery now** for permitted Himalayas/Remotive/Jobicy/Remote OK public APIs. Settings allows source toggles and tracked company filters. Each query runs once per Kolkata day with four requests/provider/day and 31-second spacing. New relevant jobs share the configurable daily cap with manual intake. See [source permission review](docs/SOURCES.md). No listing page is fetched.
 8. Review Today’s best matches, Save/Dismiss jobs, and open the exact returned original listing to apply manually. Prepare a truthful draft from your verified profile and chosen resume, review/edit/regenerate/save/discard versions in Application queue, and open the listing for manual submission. This never marks Applied.
 
+9. In Tracker, explicitly confirm an application you submitted yourself and its Kolkata date, record later statuses, notes, next steps and follow-ups. History remains immutable. Settings exports complete JSON or CSV tables; see [tracking](docs/TRACKING.md) and [private backup/restore](docs/BACKUP.md).
+
 Nothing is submitted. Open original listing is a normal user-controlled link. Prepare application generates materials; Run discovery now ingests permitted listings. Authorized submission is disabled with an explanation. See [application preparation and optional AI data handling](docs/PREPARATION.md).
 
 ## Checks
@@ -56,13 +58,13 @@ Prisma generation runs during postinstall, typecheck, and build. Generated clien
 
 At 320px, 768px, and 1280px check navigation, form wrapping, job cards, sticky list headers, dialogs, and no horizontal overflow. Use Tab/Shift+Tab for visible focus, the skip link, More-sheet focus containment/Escape return, and job confirmation cancellation. Check that unsaved edits warn before leaving through navigation links or unloading. SPA history navigation remains unverified.
 
-After entering your own verified skills, import a real description with manually supplied required skills. Check the matching/missing explanation, save and find it in Saved jobs, edit a revision, refresh filters, and confirm that dashboard counts reflect actual records. A LinkedIn/Indeed URL must never fetch its page. No workflow should claim Applied.
+After entering your own verified skills, import a real description with manually supplied required skills. Check the matching/missing explanation, save and find it in Saved jobs, edit a revision, refresh filters, and confirm that dashboard counts reflect actual records. A LinkedIn/Indeed URL must never fetch its page. Applied must appear only after your explicit manual confirmation.
 
 Manual visual/keyboard inspection was not performed in this tool session. DOM and HTTP checks do not replace it.
 
 ## Limits
 
-PDF/TXT only; local bounded extraction with human review, no DOCX/OCR. Requirement classification uses a bounded English rule vocabulary. No resume removal/redaction UI yet. CSV and JSON imports support the documented fields. Lists sort and score-filter within the 1,000 most recent records matching database filters; recording matches handles up to 200 recent unarchived jobs. Missing job/profile information requires your input. Tracking, authorized submissions and Inngest scheduling remain future work. Optional AI adapters are implemented but real-provider untested; default preparation is deterministic. Resume emphasis is a selection/order display, not an exported replacement PDF. Discovery currently requests only the first 20 records per query. ATS board ingestion and credentialed Adzuna/Jooble adapters remain disabled where permission/configuration is unresolved. Unknown salary fields, unsupported pay periods and free-form Remotive salary text are not guessed.
+PDF/TXT only; local bounded extraction with human review, no DOCX/OCR. Requirement classification uses a bounded English rule vocabulary. No resume removal/redaction UI yet. CSV and JSON imports support the documented fields. Lists sort and score-filter within the 1,000 most recent records matching database filters; recording matches handles up to 200 recent unarchived jobs. Missing job/profile information requires your input. Authorized submissions and Inngest scheduling remain future work. Tracking follow-ups are local reminders with no notification delivery. Buffered export is intended for a local workspace; use pg_dump for large backups. Optional AI adapters are implemented but real-provider untested; default preparation is deterministic. Resume emphasis is a selection/order display, not an exported replacement PDF. Discovery currently requests only the first 20 records per query. ATS board ingestion and credentialed Adzuna/Jooble adapters remain disabled where permission/configuration is unresolved. Unknown salary fields, unsupported pay periods and free-form Remotive salary text are not guessed.
 
 Production dependencies audit clean. Five high-severity entries remain in the development lint chain (eslint-config-next → Next lint plugin → fast-glob → micromatch → braces); npm has no compatible patch. ESLint 9.39.5 remains required by current plugin peer ranges despite its deprecation. Scoped Prisma-tooling overrides are explained in docs/DATABASE.md and verified through real generation/migration tests.
 
@@ -78,4 +80,4 @@ Production dependencies audit clean. Five high-severity entries remain in the de
 - `prisma`: schema and migrations; `scripts`: local setup/disposable tests.
 - `tests`: unit/DOM and real database checks.
 
-DESIGN.md remains the AMOLED UI contract. AGENTS.md remains the compliance/truth/security contract. Latest user instructions authorize continuing through Phase 6 without approval waits, using permitted public APIs, pushing after each completed phase, and starting each new phase in a fresh Codex task. Model/source decisions and phase checks remain documented. See [Phase 4 report](docs/PHASE-4-WEIGHTED-REPORT.md), [Phase 5 report](docs/PHASE-5-REPORT.md), [Phase 6 report](docs/PHASE-6-REPORT.md), and [next-context handoff](docs/NEXT-CONTEXT.md).
+DESIGN.md remains the AMOLED UI contract. AGENTS.md remains the compliance/truth/security contract. The user approved the Phase 7 tracking model and implementation. Phase boundaries still require a report and approval before proceeding. Prior instructions request a push after each completed phase and a fresh context for the next phase. Model/source decisions and phase checks remain documented. See [Phase 4 report](docs/PHASE-4-WEIGHTED-REPORT.md), [Phase 5 report](docs/PHASE-5-REPORT.md), [Phase 6 report](docs/PHASE-6-REPORT.md), [Phase 7 report](docs/PHASE-7-REPORT.md), and [next-context handoff](docs/NEXT-CONTEXT.md).

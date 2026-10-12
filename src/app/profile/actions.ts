@@ -11,6 +11,8 @@ export async function saveProfileAction(input: unknown): Promise<ActionResult> {
   try {
     const profile = await saveProfile(input);
     revalidatePath("/profile");
+    revalidatePath("/tracker", "layout");
+    revalidatePath("/");
     return { ok: true, message: `Saved profile revision ${profile.revision}.` };
   } catch (error) {
     return safeActionError(error);

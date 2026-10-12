@@ -15,6 +15,7 @@ import {
 function revalidateJobs(id?: string) {
   revalidatePath("/discover");
   revalidatePath("/saved");
+  revalidatePath("/tracker", "layout");
   revalidatePath("/");
   if (id) revalidatePath(`/discover/${id}`);
 }
@@ -68,7 +69,8 @@ export async function jobStateAction(input: unknown): Promise<ActionResult> {
     revalidateJobs();
     return {
       ok: true,
-      message: "Job list updated. Application status was not changed.",
+      message:
+        "Job visibility updated. Pre-application tracking synchronized; no submission was recorded.",
     };
   } catch (error) {
     return safeActionError(error);

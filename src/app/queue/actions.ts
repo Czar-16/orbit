@@ -7,6 +7,8 @@ export async function prepareDraftAction(
 ): Promise<ActionResult & { id?: string }> {
   try {
     const draft = await prepareDraft(input);
+    revalidatePath("/tracker", "layout");
+    revalidatePath("/");
     revalidatePath("/queue");
     revalidatePath("/");
     return {
@@ -23,6 +25,8 @@ export async function reviseDraftAction(
 ): Promise<ActionResult & { id?: string }> {
   try {
     const draft = await reviseDraft(input);
+    revalidatePath("/tracker", "layout");
+    revalidatePath("/");
     revalidatePath("/queue");
     revalidatePath(`/queue/${draft.id}`);
     return {

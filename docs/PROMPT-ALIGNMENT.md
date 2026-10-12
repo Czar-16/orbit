@@ -29,3 +29,7 @@ Use the existing restrictive ownership/deletion relationships and indexes; no ne
 Implemented the migration, transactional snapshot writes, provenance-aware history UI, and regression tests. Then stop for phase review. Completing full matching should precede enabling discovery; resume extraction and preparation also remain separate phases.
 
 PROMPT.md section 13 requires: “Before writing the schema, explain the proposed models and relations, then wait for my OK.” The latest user override removes phase/model/source approval waits through Phase 6. Each phase still requires verification, documentation, and a GitHub push; each new phase starts in a fresh task. Compliance rules remain in force.
+
+## Phase 7 approval and delivery
+
+The user explicitly approved the documented tracking model with “yes proceed” after the model approval question. Phase 7 implements manual status confirmation/date, notes, immutable events, Kolkata follow-ups, pinned-score filters, real dashboard metrics/activity, local JSON/CSV export and backup instructions. No submission integration or Phase 8 scheduler was added. Phase 7 ends with required checks/report/push and stops before Phase 8.

@@ -11,11 +11,12 @@ export default async function Dashboard() {
   const status = await databaseStatus();
   let importedToday: number | null = null;
   let savedJobs: number | null = null;
+  let preparedCount: number | null = null;
   if (status.state === "ready") {
     try {
       const { database, workspaceId } = await requireWorkspace();
       const day = todayInterval();
-      [importedToday, savedJobs] = await Promise.all([
+      [importedToday, savedJobs, preparedCount] = await Promise.all([
         database.job.count({
           where: { workspaceId, discoveredAt: { gte: day.start, lt: day.end } },
         }),
@@ -27,10 +28,14 @@ export default async function Dashboard() {
             dismissedAt: null,
           },
         }),
+        database.applicationDraft.count({
+          where: { workspaceId, operation: "prepare" },
+        }),
       ]);
     } catch {
       importedToday = null;
       savedJobs = null;
+      preparedCount = null;
     }
   }
   const best =
@@ -56,8 +61,9 @@ export default async function Dashboard() {
     },
     {
       label: "Applications prepared",
-      value: null,
-      caption: "Application preparation is enabled in a later phase.",
+      value: preparedCount,
+      caption:
+        "Preparation events; includes preparing again after discard. No submissions.",
     },
     {
       label: "Applications confirmed",
@@ -77,7 +83,10 @@ export default async function Dashboard() {
           <h2>
             {status.state === "ready" ? "Local workspace ready" : status.label}
           </h2>
-          <p>{status.detail} Application workflows remain unavailable.</p>
+          <p>
+            {status.detail} Application preparation is available; submission is
+            manual.
+          </p>
         </div>
         <Link
           href="/settings"
@@ -118,8 +127,8 @@ export default async function Dashboard() {
       )}
       <div className="dashboard-grid">
         <Unavailable
-          title="Application activity is unavailable"
-          description="Processing history and application status will appear when their workflows are enabled. Manual imports and saved jobs are counted above from real records."
+          title="Submission tracking is not enabled yet"
+          description="Review prepared materials in Application queue. Application status and follow-ups arrive in Phase 7."
           phase="Application workflows"
         />
         <section className="panel">

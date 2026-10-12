@@ -19,6 +19,16 @@ export const localDatabaseUrlSchema = z
     }
   }, "Use a credentialed loopback PostgreSQL URL without query parameters.");
 const environmentSchema = z.object({
+  OPENAI_API_KEY: z.string().min(1).max(500).optional(),
+  OPENAI_MODEL: z
+    .string()
+    .regex(/^[A-Za-z0-9._:-]{1,100}$/)
+    .optional(),
+  OLLAMA_MODEL: z
+    .string()
+    .regex(/^[A-Za-z0-9._:-]{1,100}$/)
+    .optional(),
+  ORBIT_ALLOW_PAID_AI: z.enum(["false", "true"]).default("false"),
   ORBIT_MODE: z.literal("local").default("local"),
   NODE_ENV: z.enum(["development", "production", "test"]).optional(),
   DATABASE_URL: localDatabaseUrlSchema.optional(),

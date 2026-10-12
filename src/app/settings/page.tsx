@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { databaseStatus } from "@/lib/db";
+import { validateEnvironment } from "@/lib/env";
+import { databaseStatus, requireWorkspace } from "@/lib/db";
 import { discoveryState } from "@/lib/discovery-service";
 import { DiscoveryControls } from "@/components/discovery-controls";
 import { getPreferences } from "@/lib/preference-service";
@@ -11,6 +12,18 @@ export default async function Settings() {
   const status = await databaseStatus();
   const discovery = status.state === "ready" ? await discoveryState() : null;
   const preferences = status.state === "ready" ? await getPreferences() : null;
+  const env = validateEnvironment(process.env);
+  const logs =
+    status.state === "ready"
+      ? await (async () => {
+          const { database, workspaceId } = await requireWorkspace();
+          return database.outboundDataLog.findMany({
+            where: { workspaceId },
+            orderBy: { createdAt: "desc" },
+            take: 100,
+          });
+        })()
+      : [];
   return (
     <>
       <div className="page-heading">
@@ -37,9 +50,9 @@ export default async function Settings() {
             {
               icon: KeyRound,
               label: "AI assistance",
-              value: "Not connected",
+              value: "Off by default",
               detail:
-                "No AI key is required. Deterministic matching compares confirmed profile skills with manually supplied requirements.",
+                "No key is required for preparation. Optional OpenAI/Ollama adapters select existing verified content only; neither is claimed as connected until tested.",
             },
             {
               icon: Clock3,
@@ -62,9 +75,50 @@ export default async function Settings() {
           ))}
         </dl>
       </section>
+      <section className="panel mt-4">
+        <h2 className="mb-4">AI configuration and outbound data log</h2>
+        <p className="text-sm text-text-muted">
+          Deterministic mode is always available. OpenAI:{" "}
+          {env.OPENAI_API_KEY &&
+          env.OPENAI_MODEL &&
+          env.ORBIT_ALLOW_PAID_AI === "true"
+            ? "Configured, real interface untested"
+            : "Not configured / spending disabled"}
+          . Ollama:{" "}
+          {env.OLLAMA_MODEL
+            ? "Configured, real interface untested"
+            : "Not configured"}
+          . See .env.example. Provider choice is per regeneration; no automatic
+          calls.
+        </p>
+        <p className="field-hint">
+          Most recent 100 attempts. Logs record field names, never secrets or
+          raw personal data. Attempted means no completion result was recorded.
+        </p>
+        {logs.length ? (
+          <ul className="mt-4 divide-y divide-border">
+            {logs.map((l) => (
+              <li className="break-words py-3 text-sm" key={l.id}>
+                {l.provider} · {l.feature} · {l.model} · {l.result}
+                <p className="text-xs text-text-muted">
+                  {l.createdAt.toISOString()} · Fields: {l.fields.join(", ")}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-4 text-sm">No provider requests recorded.</p>
+        )}
+      </section>
       {preferences && (
         <section className="panel mt-4">
           <h2 className="mb-4">Matching preferences</h2>
+          {preferences.version?.origin === "defaults" && (
+            <p className="mb-4 text-sm text-text-muted">
+              Default values snapshotted for draft history. Save this form to
+              record your own preference choices.
+            </p>
+          )}
           <PreferenceForm
             key={preferences.version?.id ?? "defaults"}
             values={preferences.values}

@@ -35,11 +35,16 @@ model Workspace {
   preferences PreferenceVersion[]
   weightedMatches WeightedMatch[]
   discoveryRuns DiscoveryRun[]
+  drafts ApplicationDraft[]
+  outboundLogs OutboundDataLog[]
 }
 model ResumeVersion {
+  drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
   workspaceId String @db.Uuid
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  roleCategory String?
+  isDefault Boolean @default(false)
   storageKey String @unique
   filename String
   mimeType String
@@ -52,6 +57,7 @@ model ResumeVersion {
   @@index([workspaceId, createdAt])
 }
 model ProfileVersion {
+  drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
   workspaceId String @db.Uuid
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
@@ -89,6 +95,7 @@ model Source {
   @@unique([workspaceId, id])
 }
 model Job {
+  drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
   workspaceId String @db.Uuid
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
@@ -114,6 +121,7 @@ model Job {
   @@index([workspaceId, sourceId])
 }
 model JobRevision {
+  drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
   workspaceId String @db.Uuid
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
@@ -144,6 +152,7 @@ model JobRevision {
   provenance Json @db.JsonB
   @@unique([workspaceId, jobId, revision])
   @@unique([workspaceId, id])
+  @@unique([workspaceId, jobId, id])
   @@index([workspaceId, title])
   @@index([workspaceId, company])
   @@index([workspaceId, location])
@@ -167,6 +176,8 @@ model MatchResult {
 }
 
 model PreferenceVersion {
+  origin String @default("user")
+  drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
   workspaceId String @db.Uuid
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
@@ -212,4 +223,40 @@ model DiscoveryRun {
   finishedAt DateTime? @db.Timestamptz(3)
   @@unique([workspaceId, sourceId, day])
   @@index([workspaceId, provider, day])
+}
+
+model ApplicationDraft {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  jobId String @db.Uuid
+  job Job @relation(fields: [workspaceId, jobId], references: [workspaceId, id], onDelete: Restrict)
+  jobRevisionId String @db.Uuid
+  jobRevision JobRevision @relation(fields: [workspaceId, jobId, jobRevisionId], references: [workspaceId, jobId, id], onDelete: Restrict)
+  profileVersionId String @db.Uuid
+  profile ProfileVersion @relation(fields: [workspaceId, profileVersionId], references: [workspaceId, id], onDelete: Restrict)
+  preferenceVersionId String @db.Uuid
+  preference PreferenceVersion @relation(fields: [workspaceId, preferenceVersionId], references: [workspaceId, id], onDelete: Restrict)
+  resumeVersionId String @db.Uuid
+  resume ResumeVersion @relation(fields: [workspaceId, resumeVersionId], references: [workspaceId, id], onDelete: Restrict)
+  revision Int
+  operation String
+  content Json @db.JsonB
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([workspaceId, jobId, revision])
+  @@unique([workspaceId, id])
+  @@index([workspaceId, createdAt])
+}
+model OutboundDataLog {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  feature String
+  provider String
+  model String
+  fields String[]
+  result String @default("attempted")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  finishedAt DateTime? @db.Timestamptz(3)
+  @@index([workspaceId, createdAt])
 }

@@ -183,3 +183,7 @@ _Additions to this system (append here when extended):_
 ### Manual intake and skills matching (Phase 4)
 
 Job lists use the standard job-card layout at all widths, with URL-backed filters, sorting, and pagination. Dismissed is a neutral job-only label with text; it is not an application status. Skills-only scores use the existing score bands, a visible prioritization disclaimer, and an Inferred-by-rules label. Unknown requirements/profile skills produce Unavailable instead of a manufactured score. Source names derived from manually supplied URLs remain User-provided, not employer-verified.
+
+### Application review (Phase 6)
+
+Review uses the standard panel/input/provenance tokens, a two-column desktop layout with a sticky context panel and a single column on mobile. A sticky notice always states that nothing has been submitted. Resume emphasis compares numbered verbatim eligible project bullets with the selected order; omitted bullets are listed explicitly. Unknown answers use a dashed warning border and empty editable fields. Every saved edit is an explicit revision; there is no autosave claim. Historical and discarded revisions are read-only. Optional-provider configuration is described as configured/untested, never connected by inference.

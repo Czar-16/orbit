@@ -34,3 +34,32 @@ export async function uploadResumeAction(
     return safeActionError(error);
   }
 }
+
+export async function reviewResumeAction(
+  id: unknown,
+): Promise<ActionResult & { text?: string }> {
+  try {
+    const { resumeReview } = await import("@/lib/resume-management");
+    const text = await resumeReview(id);
+    return {
+      ok: true,
+      message:
+        "Extracted locally. Review the proposed text; no profile facts have been saved.",
+      text,
+    };
+  } catch (e) {
+    return safeActionError(e);
+  }
+}
+export async function configureResumeAction(
+  input: unknown,
+): Promise<ActionResult> {
+  try {
+    const { configureResume } = await import("@/lib/resume-management");
+    await configureResume(input);
+    revalidatePath("/profile");
+    return { ok: true, message: "Resume selection settings saved." };
+  } catch (e) {
+    return safeActionError(e);
+  }
+}

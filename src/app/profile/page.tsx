@@ -1,3 +1,5 @@
+import { ResumeReview } from "@/components/resume-review";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { getDatabase, databaseStatus, requireWorkspace } from "@/lib/db";
 import { profileFactsSchema, emptyProfile } from "@/lib/profile-schema";
@@ -33,7 +35,14 @@ export default async function Page() {
     database.resumeVersion.findMany({
       where: { workspaceId, revokedAt: null },
       orderBy: { createdAt: "desc" },
-      select: { id: true, filename: true, byteSize: true, createdAt: true },
+      select: {
+        id: true,
+        filename: true,
+        byteSize: true,
+        createdAt: true,
+        roleCategory: true,
+        isDefault: true,
+      },
     }),
   ]);
   const facts = profile
@@ -71,6 +80,12 @@ export default async function Page() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Link
+                    href={`/profile/resumes/${resume.id}`}
+                    className="inline-flex min-h-11 items-center underline text-sm"
+                  >
+                    Review proposed facts
+                  </Link>
                   <ProvenanceBadge provenance="user-provided" />
                   <a
                     href={`/api/resumes/${resume.id}`}
@@ -80,6 +95,12 @@ export default async function Page() {
                     Download
                   </a>
                 </div>
+                <ResumeReview
+                  key={`${resume.id}-${resume.roleCategory}-${resume.isDefault}`}
+                  id={resume.id}
+                  roleCategory={resume.roleCategory}
+                  isDefault={resume.isDefault}
+                />
               </li>
             ))}
           </ul>

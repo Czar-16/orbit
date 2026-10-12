@@ -2,7 +2,10 @@ import { describe, it, expect } from "vitest";
 import { validateEnvironment } from "@/lib/env";
 describe("startup environment", () => {
   it("starts locally without database or AI credentials", () => {
-    expect(validateEnvironment({})).toEqual({ ORBIT_MODE: "local" });
+    expect(validateEnvironment({})).toEqual({
+      ORBIT_MODE: "local",
+      ORBIT_ALLOW_PAID_AI: "false",
+    });
   });
   it("accepts the production local shell", () => {
     expect(

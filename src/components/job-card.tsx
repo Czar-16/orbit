@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PrepareButton } from "@/components/prepare-button";
 import { ExternalLink, CircleHelp } from "lucide-react";
 import { type JobEntry } from "@/lib/job-query";
 import { localDate } from "@/lib/time";
@@ -300,16 +301,14 @@ export function JobCard({
             <Link href={`/discover/${job.id}`}>Inspect / edit</Link>
           </Button>
         )}
-        <span
-          tabIndex={0}
-          title="Application preparation is enabled in a later phase."
-          role="group"
-          aria-label="Prepare application unavailable until the application preparation phase."
-        >
-          <Button variant="ghost" disabled>
-            Prepare application
-          </Button>
-        </span>
+        <PrepareButton
+          jobId={job.id}
+          disabled={
+            !!job.dismissedAt ||
+            !!job.archivedAt ||
+            weighted.flags.some((f) => f.status === "conflict")
+          }
+        />
       </div>
       <div className="mt-3">
         <JobActions

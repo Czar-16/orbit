@@ -84,7 +84,7 @@ export function AppShell({
           ))}
         </nav>
         <div className="sidebar-footer">
-          <span className="desktop-label text-xs text-text-muted">
+          <span className="desktop-label text-sm text-text-muted">
             Your local application workspace
           </span>
           <Button

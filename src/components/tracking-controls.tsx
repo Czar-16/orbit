@@ -1,5 +1,9 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useRef, useState } from "react";
+import { usePendingAction } from "@/hooks/use-pending-action";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { FormFeedback } from "@/components/form-feedback";
+import type { ActionResult } from "@/lib/action-result";
 import { useRouter } from "next/navigation";
 import { trackingAction } from "@/app/tracker/actions";
 import { transitions, statusLabels, type TrackingStatus } from "@/lib/tracking";
@@ -28,32 +32,62 @@ export function TrackingControls({
   followUps: FollowUpView[];
 }) {
   const router = useRouter();
-  const [message, setMessage] = useState("");
+  const [result, setResult] = useState<ActionResult | null>(null);
   const [dirty, setDirty] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const { pending, active, begin, finish } = usePendingAction();
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const [confirm, setConfirm] = useState<{
+    data: Record<string, unknown>;
+    title: string;
+    description: string;
+    label: string;
+    pendingLabel: string;
+  } | null>(null);
   useUnsavedChanges(dirty);
-  const send = (data: Record<string, unknown>) =>
-    startTransition(async () => {
-      const result = await trackingAction({
+  function actionKey(data: Record<string, unknown>) {
+    return `${data.operation}:${data.followUpId ?? data.status ?? ""}`;
+  }
+  async function send(data: Record<string, unknown>) {
+    if (!begin(actionKey(data))) return;
+    setResult(null);
+    try {
+      const response = await trackingAction({
         id,
         expectedRevision: revision,
         ...data,
       });
-      setMessage(result.message);
-      if (result.ok) {
+      setResult(response);
+      if (response.ok) {
+        setConfirm(null);
         setDirty(false);
         router.refresh();
       }
-    });
+    } catch {
+      setResult({
+        ok: false,
+        message:
+          "Tracking could not be saved. Your edits are retained. Check the local services and try again.",
+      });
+    } finally {
+      finish();
+    }
+  }
+  function requestConfirmation(
+    value: NonNullable<typeof confirm>,
+    trigger: HTMLElement | null,
+  ) {
+    if (pending) return;
+    returnFocus.current = trigger;
+    setResult(null);
+    setConfirm(value);
+  }
   const allowed = transitions[status];
   return (
     <div
       className="min-w-0 space-y-4 [overflow-wrap:anywhere]"
       onChange={() => setDirty(true)}
     >
-      <p role="status" aria-live="polite" className="text-sm text-text-muted">
-        {message}
-      </p>
+      <FormFeedback result={confirm ? null : result} />
       <fieldset disabled={pending} className="min-w-0 space-y-4">
         {allowed.includes("APPLIED") && (
           <form
@@ -61,7 +95,15 @@ export function TrackingControls({
             onSubmit={(event) => {
               event.preventDefault();
               const form = new FormData(event.currentTarget);
-              send({
+              if (form.get("confirmed") !== "on") {
+                setResult({
+                  ok: false,
+                  message:
+                    "Confirm that you submitted this application yourself before marking it Applied.",
+                });
+                return;
+              }
+              void send({
                 operation: "status",
                 status: "APPLIED",
                 date: form.get("date"),
@@ -90,7 +132,9 @@ export function TrackingControls({
               <input name="confirmed" type="checkbox" required />I confirm I
               submitted this application myself.
             </label>
-            <Button>Mark as applied</Button>
+            <Button loading={active === "status:APPLIED"}>
+              {active === "status:APPLIED" ? "Recording…" : "Mark as applied"}
+            </Button>
           </form>
         )}
         {allowed.some((s) => s !== "APPLIED") && (
@@ -99,19 +143,35 @@ export function TrackingControls({
             onSubmit={(event) => {
               event.preventDefault();
               const form = new FormData(event.currentTarget);
-              if (
-                form.get("status") === "ARCHIVED" &&
-                !window.confirm(
-                  "Archive this application? Its history will be preserved.",
-                )
-              )
+              if (form.get("confirmed") !== "on") {
+                setResult({
+                  ok: false,
+                  message:
+                    "Review and confirm this status change before saving.",
+                });
                 return;
-              send({
+              }
+              const data = {
                 operation: "status",
                 status: form.get("status"),
-                confirmed: form.get("confirmed") === "on",
+                confirmed: true,
                 date: "",
-              });
+              };
+              if (data.status === "ARCHIVED") {
+                requestConfirmation(
+                  {
+                    data,
+                    title: "Archive this application?",
+                    description:
+                      "This moves the application to Archived. All notes, saved drafts, and status history are retained. You can restore its previous status from the tracker.",
+                    label: "Archive application",
+                    pendingLabel: "Archiving…",
+                  },
+                  event.currentTarget.querySelector(
+                    'button[type="submit"], button:not([type])',
+                  ),
+                );
+              } else void send(data);
             }}
           >
             <h2>Update status</h2>
@@ -136,7 +196,20 @@ export function TrackingControls({
               <input name="confirmed" type="checkbox" required />I have reviewed
               and confirm this status change.
             </label>
-            <Button variant="secondary">Save status</Button>
+            <Button
+              variant="secondary"
+              loading={
+                !confirm &&
+                active !== "status:APPLIED" &&
+                active?.startsWith("status:")
+              }
+            >
+              {!confirm &&
+              active !== "status:APPLIED" &&
+              active?.startsWith("status:")
+                ? "Saving…"
+                : "Save status"}
+            </Button>
           </form>
         )}
         {status === "ARCHIVED" && (
@@ -152,7 +225,9 @@ export function TrackingControls({
               Returns to the recorded status before archive. A draft may need
               review first.
             </p>
-            <Button variant="secondary">Restore previous status</Button>
+            <Button variant="secondary" loading={active === "restore:"}>
+              {active === "restore:" ? "Restoring…" : "Restore previous status"}
+            </Button>
           </form>
         )}
         <form
@@ -176,7 +251,9 @@ export function TrackingControls({
             maxLength={1000}
             className="field-input"
           />
-          <Button variant="secondary">Save next step</Button>
+          <Button variant="secondary" loading={active === "nextStep:"}>
+            {active === "nextStep:" ? "Saving…" : "Save next step"}
+          </Button>
         </form>
         <form
           className="panel space-y-3"
@@ -199,7 +276,9 @@ export function TrackingControls({
             required
             className="field-input"
           />
-          <Button variant="secondary">Save note to history</Button>
+          <Button variant="secondary" loading={active === "note:"}>
+            {active === "note:" ? "Saving…" : "Save note to history"}
+          </Button>
         </form>
         <form
           className="panel space-y-3"
@@ -234,7 +313,9 @@ export function TrackingControls({
             required
             className="field-input"
           />
-          <Button variant="secondary">Add follow-up</Button>
+          <Button variant="secondary" loading={active === "followUp:"}>
+            {active === "followUp:" ? "Adding…" : "Add follow-up"}
+          </Button>
           <p className="field-hint">
             Local reminders only; no messages or scheduled notifications are
             sent.
@@ -284,38 +365,57 @@ export function TrackingControls({
                     required
                     className="field-input"
                   />
-                  <Button variant="secondary">Save follow-up</Button>
+                  <Button
+                    variant="secondary"
+                    loading={active === `followUp:${f.id}`}
+                  >
+                    {active === `followUp:${f.id}`
+                      ? "Saving…"
+                      : "Save follow-up"}
+                  </Button>
                 </form>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="secondary"
-                    onClick={() => {
-                      if (window.confirm("Mark this follow-up completed?"))
-                        send({
-                          operation: "completeFollowUp",
-                          followUpId: f.id,
-                          followUpRevision: f.revision,
-                          confirmed: true,
-                        });
-                    }}
+                    onClick={(event) =>
+                      requestConfirmation(
+                        {
+                          data: {
+                            operation: "completeFollowUp",
+                            followUpId: f.id,
+                            followUpRevision: f.revision,
+                            confirmed: true,
+                          },
+                          title: "Complete this follow-up?",
+                          description: `“${f.label}” will be recorded as completed. It will leave the pending reminder list, and its history is retained. No message is sent.`,
+                          label: "Complete follow-up",
+                          pendingLabel: "Completing…",
+                        },
+                        event.currentTarget,
+                      )
+                    }
                   >
                     Complete
                   </Button>
                   <Button
-                    variant="ghost"
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          "Cancel this follow-up? History is preserved.",
-                        )
+                    variant="destructive"
+                    onClick={(event) =>
+                      requestConfirmation(
+                        {
+                          data: {
+                            operation: "cancelFollowUp",
+                            followUpId: f.id,
+                            followUpRevision: f.revision,
+                            confirmed: true,
+                          },
+                          title: "Cancel this follow-up?",
+                          description: `“${f.label}” will leave the pending reminder list. Its history is retained. No message is sent.`,
+                          label: "Cancel follow-up",
+                          pendingLabel: "Cancelling…",
+                        },
+                        event.currentTarget,
                       )
-                        send({
-                          operation: "cancelFollowUp",
-                          followUpId: f.id,
-                          followUpRevision: f.revision,
-                          confirmed: true,
-                        });
-                    }}
+                    }
                   >
                     Cancel follow-up
                   </Button>
@@ -325,6 +425,19 @@ export function TrackingControls({
           </section>
         ))}
       </fieldset>
+      <ConfirmationDialog
+        open={confirm !== null}
+        title={confirm?.title ?? "Confirm change"}
+        description={confirm?.description ?? ""}
+        confirmLabel={confirm?.label ?? "Save change"}
+        pendingLabel={confirm?.pendingLabel ?? "Saving…"}
+        destructive={confirm?.data.operation !== "completeFollowUp"}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => (confirm ? send(confirm.data) : undefined)}
+        pending={pending}
+        result={result}
+        returnFocus={returnFocus}
+      />
     </div>
   );
 }

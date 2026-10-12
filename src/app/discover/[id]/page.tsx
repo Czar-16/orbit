@@ -101,7 +101,7 @@ export default async function Page({
           <ProvenanceBadge provenance={evidence.description.provenance} />
         </h2>
         {revision.description ? (
-          <p className="max-w-[70ch] whitespace-pre-wrap break-words text-sm">
+          <p className="max-w-[70ch] whitespace-pre-wrap break-words text-base">
             {revision.description}
           </p>
         ) : (
@@ -110,7 +110,7 @@ export default async function Page({
           </p>
         )}
         {job.listingUrl && (
-          <p className="mt-4 break-all font-mono text-xs text-text-muted">
+          <p className="mt-4 break-all font-mono text-sm text-text-muted">
             Current listing URL: {job.listingUrl}{" "}
             <ProvenanceBadge provenance={evidence.listingUrl.provenance} />
           </p>

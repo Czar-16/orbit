@@ -98,7 +98,7 @@ h2 {
   font-weight: 700;
 }
 .app-shell {
-  --sidebar-width: 240px;
+  --sidebar-width: 232px;
 }
 .sidebar {
   width: var(--sidebar-width);
@@ -115,8 +115,8 @@ h2 {
   align-items: center;
   gap: 12px;
   padding: 0 20px;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   border-bottom: 1px solid var(--border);
 }
 .nav-link {
@@ -125,10 +125,10 @@ h2 {
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 10px;
   color: var(--text-muted);
   position: relative;
-  transition: background 150ms ease-out;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
 }
 .nav-link:hover {
   background: var(--surface-2);
@@ -136,7 +136,8 @@ h2 {
 }
 .nav-link.active {
   background: var(--accent-soft);
-  color: var(--text);
+  color: var(--accent-soft-text);
+  font-weight: 700;
 }
 .nav-link.active::before {
   content: "";
@@ -177,7 +178,7 @@ h2 {
   gap: 12px;
 }
 .topbar-actions > span[tabindex] {
-  border-radius: 6px;
+  border-radius: 10px;
 }
 .local-badge {
   display: inline-flex;
@@ -186,14 +187,14 @@ h2 {
   gap: 6px;
   padding: 4px 8px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 10px;
   font-size: 14px;
   color: var(--text-muted);
 }
 .content {
-  max-width: 1280px;
-  margin: auto;
-  padding: 24px;
+  max-width: 1216px;
+  margin: 0;
+  padding: 28px 48px;
 }
 .page-heading {
   margin-bottom: 24px;
@@ -205,23 +206,23 @@ h2 {
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 20px;
+  border-radius: 14px;
+  padding: 22px;
   min-width: 0;
 }
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 16px;
+  gap: 16px;
+  margin-top: 24px;
 }
 .metric {
-  padding: 16px;
+  padding: 22px;
 }
 .metric h2 {
   font-size: 14px;
-  font-weight: 400;
-  color: var(--text-muted);
+  font-weight: 700;
+  color: var(--text-label);
 }
 .metric-value {
   font:
@@ -255,7 +256,7 @@ h2 {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 16px;
-  margin-top: 16px;
+  margin-top: 24px;
 }
 .empty-state {
   display: flex;
@@ -275,7 +276,7 @@ h2 {
   color: var(--text-muted);
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 4px 8px;
 }
 .unknown-badge {
@@ -285,7 +286,7 @@ h2 {
   font-size: 14px;
   padding: 2px 6px;
   border: 1px dashed var(--border-strong);
-  border-radius: 6px;
+  border-radius: 10px;
 }
 .settings-list > div {
   display: grid;
@@ -326,7 +327,7 @@ h2 {
 }
 .skeleton {
   background: var(--surface-3);
-  border-radius: 6px;
+  border-radius: 10px;
 }
 @media (min-width: 1024px) {
   .sidebar-collapsed {
@@ -456,8 +457,8 @@ h2 {
   width: 100%;
   min-width: 0;
   min-height: 44px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
   padding: 8px 12px;
   background: var(--surface-2);
   color: var(--text);
@@ -538,3 +539,47 @@ body { font-variant-numeric: tabular-nums; }
   .activity-marker { width: 24px; height: 24px; margin-top: 10px; }
   .activity-item:not(:last-child)::before { left: 11px; top: 34px; }
 }
+
+/* Shared screen rhythm and readable content. Static panels have no hover state. */
+.content { overflow-wrap: anywhere; }
+.content > .panel, .content > section, .content > form { margin-bottom: 24px; }
+.content > :last-child { margin-bottom: 0; }
+.panel h3 { font-size: 18px; font-weight: 700; }
+.field-label, .job-card dt { font-weight: 700; color: var(--text-label); }
+.field-input { transition: border-color 160ms ease-out, background-color 160ms ease-out; }
+.field-input:hover:not(:disabled):not([aria-invalid="true"]) { border-color: var(--accent); }
+.field-input:disabled { opacity: .4; cursor: not-allowed; }
+.panel pre, .panel .whitespace-pre-wrap { max-width: 70ch; }
+.job-card-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: start; }
+.job-score { max-width: 220px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); padding: 10px; }
+.job-warning { margin-top: 16px; border: 1px solid var(--warning-border); border-radius: 14px; background: var(--warning-soft); padding: 16px; }
+.job-warning strong { color: var(--warning); }
+.job-warning p { margin-top: 4px; font-size: 14px; }
+.job-action-area { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }
+.dialog-overlay { background: var(--overlay); }
+.dialog-overlay[data-state="open"] { animation: overlay-in 200ms ease-out; }
+.dialog-overlay[data-state="closed"] { animation: overlay-in 200ms ease-in reverse; }
+.sheet-content[data-state="open"] { animation: sheet-in 200ms ease-out; }
+.sheet-content[data-state="closed"] { animation: sheet-in 200ms ease-in reverse; }
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 767px) {
+  .panel { padding: 16px; }
+  .job-card-header { grid-template-columns: minmax(0, 1fr); }
+  .job-score { max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay, .sheet-content { animation: none !important; }
+}
+
+.dialog-content { max-height: 85dvh; overflow-y: auto; }
+.dialog-content[data-state="open"] { animation: dialog-in 200ms ease-out; }
+.dialog-content[data-state="closed"] { animation: dialog-in 200ms ease-in reverse; }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .dialog-content { animation: none !important; } }
+
+/* Async feedback and long content must fit at the narrowest viewport. */
+.dialog-content { overflow-wrap: anywhere; }
+.skeleton { max-width: 100%; }
+textarea.field-input { max-width: 70ch; }
+button svg { flex-shrink: 0; }

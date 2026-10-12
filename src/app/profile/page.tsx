@@ -70,7 +70,7 @@ export default async function Page() {
               >
                 <div className="min-w-0">
                   <p className="break-words">{resume.filename}</p>
-                  <p className="text-xs text-text-muted">
+                  <p className="text-sm text-text-muted">
                     {Math.ceil(resume.byteSize / 1024)} KB ·{" "}
                     {new Intl.DateTimeFormat("en-IN", {
                       timeZone: "Asia/Kolkata",

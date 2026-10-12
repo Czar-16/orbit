@@ -1,4 +1,5 @@
 "use client";
+import { usePendingAction } from "@/hooks/use-pending-action";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,31 +44,32 @@ export function JobImportForm({
 }: {
   defaults?: JobInput;
 }) {
+  const { pending, begin, finish } = usePendingAction();
   const router = useRouter();
   const [result, setResult] = useState<ActionResult | null>(null);
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isDirty, isSubmitting },
+    formState: { errors, isDirty },
   } = useForm<JobInput>({
     resolver: zodResolver(jobInputSchema),
     defaultValues: defaults,
   });
   useUnsavedChanges(isDirty);
   async function submit(values: JobInput) {
+    if (!begin()) return;
     setResult(null);
     try {
       const response = await saveJobAction(values);
       setResult(response);
       if (response.ok) {
-        if (defaults.jobId) {
-          reset({ ...values, expectedRevision: values.expectedRevision + 1 });
-          router.refresh();
-        } else {
-          reset(emptyJob);
-          router.refresh();
-        }
+        reset(
+          defaults.jobId
+            ? { ...values, expectedRevision: values.expectedRevision + 1 }
+            : emptyJob,
+        );
+        router.refresh();
       }
     } catch {
       setResult({
@@ -75,8 +77,11 @@ export function JobImportForm({
         message:
           "The import request failed. Your input is still unsaved; try again.",
       });
+    } finally {
+      finish();
     }
   }
+
   return (
     <form onSubmit={handleSubmit(submit)} noValidate>
       <p className="mb-4 text-sm text-text-muted">
@@ -84,108 +89,108 @@ export function JobImportForm({
         Enter employer-stated details manually; blank fields remain Unknown, and
         entered fields are User-provided.
       </p>
-      <div className="form-grid">
-        {fields.map((field) => (
-          <div
-            key={field.key}
-            className={
-              field.type === "textarea" ||
-              field.key === "listingUrl" ||
-              field.key === "skills"
-                ? "md:col-span-2"
-                : ""
-            }
-          >
-            <label htmlFor={`job-${field.key}`} className="field-label">
-              {field.label}
-            </label>
-            {field.type === "textarea" ? (
-              <textarea
-                id={`job-${field.key}`}
-                className={`field-input ${field.key === "description" ? "min-h-40" : "min-h-24"}`}
-                {...register(field.key)}
-                aria-invalid={!!errors[field.key]}
-                aria-describedby={`job-hint-${field.key}`}
-              />
-            ) : (
-              <input
-                id={`job-${field.key}`}
-                type={field.type}
-                className="field-input"
-                {...register(field.key)}
-                aria-invalid={!!errors[field.key]}
-                aria-describedby={`job-hint-${field.key}`}
-              />
-            )}
-            <FieldMessage
-              id={`job-hint-${field.key}`}
-              error={errors[field.key]?.message}
-              hint="Optional; leave blank if unknown."
-            />
-          </div>
-        ))}
-        {[
-          {
-            key: "workArrangement",
-            label: "Work arrangement",
-            options: ["remote", "hybrid", "on-site"],
-          },
-          {
-            key: "employmentType",
-            label: "Employment type",
-            options: [
-              "full-time",
-              "part-time",
-              "contract",
-              "internship",
-              "temporary",
-            ],
-          },
-          {
-            key: "compensationPeriod",
-            label: "Compensation period",
-            options: ["hour", "month", "year"],
-          },
-        ].map((field) => (
-          <div key={field.key}>
-            <label className="field-label" htmlFor={`job-${field.key}`}>
-              {field.label}
-            </label>
-            <select
-              className="field-input"
-              id={`job-${field.key}`}
-              {...register(
-                field.key as
-                  | "workArrangement"
-                  | "employmentType"
-                  | "compensationPeriod",
-              )}
+      <fieldset disabled={pending} className="min-w-0">
+        <div className="form-grid">
+          {fields.map((field) => (
+            <div
+              key={field.key}
+              className={
+                field.type === "textarea" ||
+                field.key === "listingUrl" ||
+                field.key === "skills"
+                  ? "md:col-span-2"
+                  : ""
+              }
             >
-              <option value="">Unknown</option>
-              {field.options.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 flex items-center gap-4">
-        <Button disabled={isSubmitting}>
-          {isSubmitting
-            ? "Saving…"
-            : defaults.jobId
-              ? "Save job revision"
-              : "Import job manually"}
-        </Button>
-        {isDirty && (
-          <span className="text-xs text-warning">Unsaved changes</span>
-        )}
-      </div>
-      <p className="mt-4 text-xs text-text-muted">
-        Nothing has been submitted. LinkedIn and Indeed intake is manual only.
-      </p>
+              <label htmlFor={`job-${field.key}`} className="field-label">
+                {field.label}
+              </label>
+              {field.type === "textarea" ? (
+                <textarea
+                  id={`job-${field.key}`}
+                  className={`field-input ${field.key === "description" ? "min-h-40" : "min-h-24"}`}
+                  {...register(field.key)}
+                  aria-invalid={!!errors[field.key]}
+                  aria-describedby={`job-hint-${field.key}`}
+                />
+              ) : (
+                <input
+                  id={`job-${field.key}`}
+                  type={field.type}
+                  className="field-input"
+                  {...register(field.key)}
+                  aria-invalid={!!errors[field.key]}
+                  aria-describedby={`job-hint-${field.key}`}
+                />
+              )}
+              <FieldMessage
+                id={`job-hint-${field.key}`}
+                error={errors[field.key]?.message}
+                hint="Optional; leave blank if unknown."
+              />
+            </div>
+          ))}
+          {[
+            {
+              key: "workArrangement",
+              label: "Work arrangement",
+              options: ["remote", "hybrid", "on-site"],
+            },
+            {
+              key: "employmentType",
+              label: "Employment type",
+              options: [
+                "full-time",
+                "part-time",
+                "contract",
+                "internship",
+                "temporary",
+              ],
+            },
+            {
+              key: "compensationPeriod",
+              label: "Compensation period",
+              options: ["hour", "month", "year"],
+            },
+          ].map((field) => (
+            <div key={field.key}>
+              <label className="field-label" htmlFor={`job-${field.key}`}>
+                {field.label}
+              </label>
+              <select
+                className="field-input"
+                id={`job-${field.key}`}
+                {...register(
+                  field.key as
+                    "workArrangement" | "employmentType" | "compensationPeriod",
+                )}
+              >
+                <option value="">Unknown</option>
+                {field.options.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          <Button loading={pending}>
+            {pending
+              ? "Saving…"
+              : defaults.jobId
+                ? "Save job revision"
+                : "Import job manually"}
+          </Button>
+          {isDirty && (
+            <span className="text-sm text-warning">Unsaved changes</span>
+          )}
+        </div>
+        <p className="mt-4 text-sm text-text-muted">
+          Nothing has been submitted. LinkedIn and Indeed intake is manual only.
+        </p>
+      </fieldset>
       <FormFeedback result={result} />
     </form>
   );

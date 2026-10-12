@@ -15,7 +15,7 @@ export function ApplicationStatusBadge({ status }: { status: TrackingStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 rounded-md border px-2 py-1 text-xs",
+        "inline-flex items-center gap-2 rounded-md border px-2 py-1 text-sm",
         tone,
       )}
     >

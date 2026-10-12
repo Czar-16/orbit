@@ -61,12 +61,12 @@ export async function JobList({
       )}
       <nav
         aria-label="Job list pages"
-        className="mt-4 flex items-center justify-between gap-3"
+        className="mt-4 flex flex-wrap items-center justify-between gap-3"
       >
-        <span className="text-xs text-text-muted">
+        <span className="text-sm text-text-muted">
           Page {result.page} of {result.pages}
         </span>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {result.page > 1 && (
             <Button asChild variant="secondary">
               <Link href={pageUrl(path, filters, result.page - 1)}>

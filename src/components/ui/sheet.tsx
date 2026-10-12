@@ -8,8 +8,8 @@ export const SheetClose = Dialog.Close;
 export function SheetContent({ children }: { children: React.ReactNode }) {
   return (
     <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 z-40 bg-black/80" />
-      <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 rounded-t-[14px] border border-border-strong bg-surface-3 p-4 pb-[max(16px,env(safe-area-inset-bottom))]">
+      <Dialog.Overlay className="dialog-overlay fixed inset-0 z-40" />
+      <Dialog.Content className="sheet-content fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto rounded-t-[14px] border border-border-strong bg-surface-3 p-4 pb-[max(16px,env(safe-area-inset-bottom))]">
         <div className="mb-4 flex items-center justify-between">
           <Dialog.Title className="text-base font-semibold">
             More navigation

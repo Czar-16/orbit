@@ -1,4 +1,5 @@
 "use client";
+import { usePendingAction } from "@/hooks/use-pending-action";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -12,20 +13,21 @@ export function PrepareButton({
   jobId: string;
   disabled?: boolean;
 }) {
-  const [pending, setPending] = useState(false);
+  const { pending, begin, finish } = usePendingAction();
   const [result, setResult] = useState<ActionResult | null>(null);
   const router = useRouter();
   return (
     <div>
       <Button
         disabled={disabled || pending}
+        loading={pending}
         title={
           disabled
             ? "Restore this job and resolve hard-filter conflicts before preparing."
             : "Prepare a deterministic draft from your verified profile and selected resume."
         }
         onClick={async () => {
-          setPending(true);
+          if (!begin()) return;
           setResult(null);
           try {
             const response = await prepareDraftAction({
@@ -38,7 +40,7 @@ export function PrepareButton({
           } catch {
             setResult({ ok: false, message: "Preparation failed. Try again." });
           } finally {
-            setPending(false);
+            finish();
           }
         }}
       >

@@ -1,4 +1,5 @@
 "use client";
+import { usePendingAction } from "@/hooks/use-pending-action";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -10,12 +11,12 @@ export function ResumeUpload() {
   const router = useRouter();
   const form = useRef<HTMLFormElement>(null);
   const [result, setResult] = useState<ActionResult | null>(null);
-  const [pending, setPending] = useState(false);
+  const { pending, begin, finish } = usePendingAction();
   const [selected, setSelected] = useState(false);
   useUnsavedChanges(selected);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPending(true);
+    if (!begin()) return;
     setResult(null);
     try {
       const response = await uploadResumeAction(
@@ -34,7 +35,7 @@ export function ResumeUpload() {
           "The upload request failed. Check the 5 MB limit and try again.",
       });
     } finally {
-      setPending(false);
+      finish();
     }
   }
   return (
@@ -49,6 +50,7 @@ export function ResumeUpload() {
         type="file"
         accept=".pdf,.txt,application/pdf,text/plain"
         required
+        disabled={pending}
         onChange={(event) => setSelected(!!event.target.files?.length)}
         aria-describedby="resume-hint"
       />
@@ -56,7 +58,7 @@ export function ResumeUpload() {
         PDF or UTF-8 TXT, up to 5 MB. Use a simple filename. Stored outside the
         public directory; no automatic fact extraction.
       </p>
-      <Button variant="secondary" className="mt-4" disabled={pending}>
+      <Button variant="secondary" className="mt-4" loading={pending}>
         {pending ? "Uploading…" : "Upload privately"}
       </Button>
       <FormFeedback result={result} />

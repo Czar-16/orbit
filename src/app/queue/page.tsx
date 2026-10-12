@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { databaseStatus, requireWorkspace } from "@/lib/db";
 import { Unavailable } from "@/components/unavailable";
 export const metadata: Metadata = { title: "Application queue" };
@@ -54,12 +56,20 @@ export default async function Page() {
             ))}
           </ul>
         ) : (
-          <p>
-            No drafts yet.{" "}
-            <Link href="/discover" className="underline">
-              Find a job and prepare an application.
-            </Link>
-          </p>
+          <div className="empty-state">
+            <FileText
+              size={28}
+              className="text-text-muted"
+              aria-hidden="true"
+            />
+            <p>
+              No drafts yet. Choose a job and prepare an application to review
+              it here.
+            </p>
+            <Button asChild variant="secondary">
+              <Link href="/discover">Find a job</Link>
+            </Button>
+          </div>
         )}
       </section>
     </>

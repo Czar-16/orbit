@@ -15,7 +15,7 @@ export function Unavailable({
       <Database size={28} className="text-text-muted" aria-hidden="true" />
       <h2>{title}</h2>
       <p>{description}</p>
-      <span className="phase-badge">Later phase · {phase}</span>
+      <span className="phase-badge">{phase}</span>
       <Button asChild variant="secondary">
         <Link href="/settings">
           View setup status

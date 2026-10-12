@@ -29,7 +29,7 @@ export function RequirementReview({
               <p className="mt-1 max-w-[70ch] whitespace-pre-wrap">
                 {requirement.text}
               </p>
-              <p className="mt-1 text-xs text-text-muted">
+              <p className="mt-1 text-sm text-text-muted">
                 Supplied{" "}
                 {requirement.source === "description"
                   ? "description"

@@ -90,7 +90,7 @@ Every field that can be uncertain shows its provenance with a small pill badge (
 
 ## 7. Spacing, radius, elevation
 
-- Spacing scale: 4, 8, 12, 16, 20, 24, 32, 48. Main content padding 28px 48px (16px on mobile). Card padding 22px. Gap between cards 16px, gap between sections 20px.
+- Spacing scale: 4, 8, 12, 16, 20, 24, 32, 48. Main content padding 28px 48px (16px on mobile). Card padding 22px. Gap between cards 16px, gap between sections 24px.
 - Radius: 10px for buttons and inputs, 14px for cards and callouts and modals, fully round (99px) for pills and dots.
 - Elevation: no shadows on cards. Use border + background step instead. Popovers/modals may use a soft shadow plus `--border-strong`.
 - Borders: 1px on cards and dividers, 1.5px on inputs and outline buttons. No gradients on surfaces, no glow effects.
@@ -154,7 +154,7 @@ Keep minimal: a 14-day line/bar for jobs processed and applications prepared, an
 
 ## 11. Motion
 
-- Subtle and fast: 120-180ms ease-out for hover/focus/expand; 200ms for sheets/dialogs.
+- Subtle and fast: 150–180ms ease-out for hover/focus/pressed states; 200ms for sheets/dialogs.
 - No parallax, bouncing, or looping decorative animation.
 - Respect `prefers-reduced-motion`.
 
@@ -218,3 +218,17 @@ The browser preference is Light / Dark / System, stored as `orbit.theme` in loca
 ### Activity feeds
 
 Activity panels use a compact heading icon on the accent-soft surface, a connected timeline with neutral markers, and divided entries. Job links are bold 16px with a 44px minimum target; status pills wrap alongside the title. Event kind and origin remain visible, with a semantic timestamp in Asia/Kolkata on a separate 14px muted line. Long titles and metadata wrap instead of truncating. Discovery runs use nested bordered surface-2 cards with the recorded state, date, counts, and error text. Empty and unavailable states use a dashed neutral panel. Dashboard columns align at the top so adjacent panels keep their natural height. All entries remain visible without an internal scroll area.
+
+### UI polish: shared layout and interaction contract
+
+All screens share a left-aligned 1120px content column, with 28px vertical and 48px horizontal desktop padding and 16px mobile padding. Panels have 14px corners and 22px desktop / 16px mobile padding. Sections are separated by 24px; cards within lists by 16px. Page, section, and card headings are 32px, 20px, and 18px respectively. Long descriptions and drafts stay within 70ch.
+
+Buttons have 44px minimum height, 10px corners, bold readable labels, and primary, secondary, ghost, and destructive variants. Hover and pressed states use token surfaces; keyboard focus uses the shared offset accent ring. Disabled controls retain 40% opacity. Interaction transitions last 160ms. Dialog and sheet entrances/exits last 200ms, using opacity and a small translation; reduced motion disables both. Whole job lists do not animate. Only interactive job cards receive hover-border feedback; static panels do not.
+
+Job cards separate title and match-score regions, use bold field labels, group missing scoring inputs in a warning callout, and place preparation before listing and inspection actions. Missing scores read “Not scored yet.” No matching, provenance, or submission behavior changes.
+
+### Confirmations and action feedback
+
+Job dismissal/archive, draft discard, regeneration with unsaved edits, application archive, and follow-up completion/cancellation use the shared Radix confirmation dialog. Cancel receives initial focus; keyboard focus is trapped and returned to the initiating control. Escape and outside dismissal are blocked while an action is pending. Failed requests leave the dialog open with an actionable error; only a successful action result closes it. Buttons name the action and descriptions explain consequences and retained history.
+
+Action feedback pairs an icon with readable text, semantic soft background, and border. Success is announced as a polite status; errors are alerts. Pending buttons show a local indicator and accurate action label; synchronous request locks prevent duplicate mutations. Failed saves retain edits. Applied remains an explicit manual confirmation of an application already submitted by the user.

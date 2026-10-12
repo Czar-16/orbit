@@ -1,4 +1,5 @@
 "use client";
+import { usePendingAction } from "@/hooks/use-pending-action";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -23,9 +24,9 @@ export function ResumeReview({
   const [defaultResume, setDefault] = useState(isDefault);
   const [text, setText] = useState<string | null>(null);
   const [result, setResult] = useState<ActionResult | null>(null);
-  const [pending, setPending] = useState(false);
+  const { pending, active, begin, finish } = usePendingAction();
   async function act(review: boolean) {
-    setPending(true);
+    if (!begin(review ? "extract" : "settings")) return;
     setResult(null);
     try {
       if (review) {
@@ -44,7 +45,7 @@ export function ResumeReview({
     } catch {
       setResult({ ok: false, message: "Resume operation failed. Try again." });
     } finally {
-      setPending(false);
+      finish();
     }
   }
   return (
@@ -60,12 +61,14 @@ export function ResumeReview({
           className="field-input"
           maxLength={100}
           id={`role-${id}`}
+          disabled={pending}
           value={role}
           onChange={(e) => setRole(e.target.value)}
         />
         <label className="flex min-h-11 items-center gap-2 text-sm">
           <input
             type="checkbox"
+            disabled={pending}
             checked={defaultResume}
             onChange={(e) => setDefault(e.target.checked)}
           />
@@ -75,16 +78,18 @@ export function ResumeReview({
           <Button
             disabled={pending}
             variant="secondary"
+            loading={active === "settings"}
             onClick={() => act(false)}
           >
-            Save selection settings
+            {active === "settings" ? "Saving…" : "Save selection settings"}
           </Button>
           <Button
             disabled={pending}
             variant="secondary"
+            loading={active === "extract"}
             onClick={() => act(true)}
           >
-            {pending ? "Working…" : "Extract text for review"}
+            {active === "extract" ? "Extracting…" : "Extract text for review"}
           </Button>
         </div>
         {text !== null && (

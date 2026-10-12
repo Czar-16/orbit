@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
-    <div role="status" aria-label="Loading job intake">
-      <span className="sr-only">Loading job intake</span>
+    <div role="status" aria-label="Loading application tracker">
+      <span className="sr-only">Loading application tracker</span>
       <div className="skeleton mb-6 h-8 w-48" />
       <div className="panel">
         <div className="skeleton h-6 w-40" />

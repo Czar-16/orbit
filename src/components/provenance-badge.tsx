@@ -37,7 +37,7 @@ export function ProvenanceBadge({
     <span
       title={option.title}
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs",
+        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm",
         option.className,
       )}
     >

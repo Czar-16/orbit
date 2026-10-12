@@ -53,9 +53,9 @@ export function JobCard({
     revision.compensationMin !== null || revision.compensationMax !== null;
   return (
     <article className="panel job-card">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="job-card-header">
         <div className="min-w-0">
-          <h2 className="break-words text-[15px]">
+          <h2 className="break-words text-[18px]">
             {revision.title ?? "Job title needs your input"}
           </h2>
           <div className="mt-2">
@@ -64,32 +64,32 @@ export function JobCard({
         </div>
         <div
           title="Prioritization aid, not a guarantee."
-          className="rounded-md border border-border bg-surface-2 px-3 py-2"
+          className="job-score"
         >
-          <p className="text-xs text-text-muted">Weighted prioritization</p>
-          <p className={`font-mono text-sm ${band?.tone ?? "text-text-muted"}`}>
+          <p className="text-sm text-text-muted">Match score</p>
+          <p className={`font-bold text-lg ${band?.tone ?? "text-text-muted"}`}>
             {weighted.score === null
-              ? "Unavailable"
+              ? "Not scored yet"
               : `${weighted.score} · ${band?.label}`}
           </p>
           {weighted.score !== null && (
-            <span className="text-xs text-text-muted">Inferred by rules</span>
+            <span className="text-sm text-text-muted">Inferred by rules</span>
           )}
         </div>
       </div>
       <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {fields.map((field) => (
           <div key={field.label}>
-            <dt className="text-xs text-text-muted">{field.label}</dt>
-            <dd className="mt-1 flex flex-wrap items-center gap-2 break-words text-sm">
+            <dt className="text-sm font-bold text-text-label">{field.label}</dt>
+            <dd className="mt-1 flex flex-wrap items-center gap-2 break-words text-base">
               {field.value ?? "Needs your input"}
               <ProvenanceBadge provenance={field.evidence.provenance} />
             </dd>
           </div>
         ))}
         <div>
-          <dt className="text-xs text-text-muted">Compensation</dt>
-          <dd className="mt-1 text-sm">
+          <dt className="text-sm font-bold text-text-label">Compensation</dt>
+          <dd className="mt-1 text-base">
             {compensation ? (
               <div className="space-y-1">
                 {[
@@ -134,16 +134,27 @@ export function JobCard({
         </div>
       </dl>
       <div className="mt-4">
-        <p className="mb-2 flex items-center gap-2 text-xs text-text-muted">
+        <p className="mb-2 flex flex-wrap items-center gap-2 text-sm font-bold text-text-label">
           Required skills{" "}
           <ProvenanceBadge provenance={evidence.skills.provenance} />
         </p>
         {revision.skills.length ? (
-          <p className="text-sm">{revision.skills.join(", ")}</p>
+          <p className="text-base">{revision.skills.join(", ")}</p>
         ) : (
           <p className="text-sm text-text-muted">Needs your input.</p>
         )}
       </div>
+      {weighted.score === null && (
+        <div className="job-warning">
+          <strong className="flex items-start gap-2">
+            <CircleHelp size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
+            {revision.skills.length === 0
+              ? "Add the employer’s required skills to get a score."
+              : "Review your profile and matching inputs to get a score."}
+          </strong>
+          <p>{match.reason ?? "Some scoring inputs are missing."} {weighted.evaluatedWeight}/100 weight evaluated. Prioritization aid, not a guarantee.</p>
+        </div>
+      )}
       <details className="mt-4 text-sm">
         <summary className="min-h-11 cursor-pointer">
           Weighted explanation · {weighted.evaluatedWeight}/100 weight evaluated
@@ -161,7 +172,7 @@ export function JobCard({
                 {c.status} · {Math.round(c.unknownWeight * 10) / 10} weight
                 unknown
               </span>
-              <p className="text-xs text-text-muted">{c.explanation}</p>
+              <p className="text-sm text-text-muted">{c.explanation}</p>
             </li>
           ))}
         </ul>
@@ -175,7 +186,7 @@ export function JobCard({
       <div className="mt-4 space-y-2 text-sm">
         <p className="text-text-muted">
           Separate skills coverage:{" "}
-          {match.score === null ? "Unavailable" : `${match.score}%`}
+          {match.score === null ? "Not scored yet" : `${match.score}%`}
         </p>
         {match.reason ? (
           <p className="flex items-start gap-2 text-text-muted">
@@ -208,7 +219,7 @@ export function JobCard({
             </p>
           </>
         )}
-        <p className="text-xs text-text-muted">
+        <p className="text-sm text-text-muted">
           Prioritization aid, not a guarantee. Skills only; experience, salary,
           eligibility, and employer claims are not verified by this score.
           {entry.profileRevision !== null
@@ -216,8 +227,8 @@ export function JobCard({
             : " No verified profile available."}
         </p>
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-        <span className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] uppercase tracking-[0.04em]">
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-sm font-bold">
           <span
             aria-hidden="true"
             className={`size-1.5 rounded-full ${status === "Saved" ? "bg-info" : "bg-text-muted"}`}
@@ -280,27 +291,10 @@ export function JobCard({
           }).format(job.discoveredAt)}
         </span>
       </div>
-      <p className="mt-3 text-xs text-text-muted">
+      <p className="mt-3 text-sm text-text-muted">
         Manual apply only. Nothing has been submitted.
       </p>
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {job.listingUrl ? (
-          <Button asChild variant="secondary">
-            <a href={job.listingUrl} target="_blank" rel="noopener noreferrer">
-              Open original listing
-              <ExternalLink size={14} aria-hidden="true" />
-            </a>
-          </Button>
-        ) : (
-          <span className="text-xs text-text-muted">
-            Original listing URL <ProvenanceBadge provenance="unknown" />
-          </span>
-        )}
-        {inspect && (
-          <Button asChild variant="ghost">
-            <Link href={`/discover/${job.id}`}>Inspect / edit</Link>
-          </Button>
-        )}
+      <div className="job-action-area flex flex-wrap items-center gap-2">
         <PrepareButton
           jobId={job.id}
           disabled={
@@ -309,6 +303,24 @@ export function JobCard({
             weighted.flags.some((f) => f.status === "conflict")
           }
         />
+
+        {job.listingUrl ? (
+          <Button asChild variant="secondary">
+            <a href={job.listingUrl} target="_blank" rel="noopener noreferrer">
+              Open original listing
+              <ExternalLink size={14} aria-hidden="true" />
+            </a>
+          </Button>
+        ) : (
+          <span className="text-sm text-text-muted">
+            Original listing URL <ProvenanceBadge provenance="unknown" />
+          </span>
+        )}
+        {inspect && (
+          <Button asChild variant="ghost">
+            <Link href={`/discover/${job.id}`}>Inspect / edit</Link>
+          </Button>
+        )}
       </div>
       <div className="mt-3">
         <JobActions

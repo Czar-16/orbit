@@ -1,42 +1,47 @@
 "use client";
 import { useState } from "react";
+import { usePendingAction } from "@/hooks/use-pending-action";
+import { FormFeedback } from "@/components/form-feedback";
+import type { ActionResult } from "@/lib/action-result";
 import { useRouter } from "next/navigation";
 import { Play } from "lucide-react";
 import { runDailyAction } from "@/app/discover/discovery-actions";
 import { Button } from "@/components/ui/button";
 export function RunDailyButton({ available }: { available: boolean }) {
-  const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState("");
+  const { pending, begin, finish } = usePendingAction();
+  const [result, setResult] = useState<ActionResult | null>(null);
   const router = useRouter();
   return (
     <div>
       <Button
         aria-describedby="run-reason"
         disabled={!available || pending}
+        loading={pending}
         variant="ghost"
         onClick={async () => {
-          setPending(true);
+          if (!begin()) return;
+          setResult(null);
           try {
             const result = await runDailyAction();
-            setMessage(result.message);
-            router.refresh();
+            setResult(result);
+            if (result.ok) router.refresh();
           } catch {
-            setMessage(
-              "Request failed. Check the local services and try again.",
-            );
+            setResult({
+              ok: false,
+              message:
+                "Request failed. Check the local services and try again.",
+            });
           } finally {
-            setPending(false);
+            finish();
           }
         }}
       >
         <Play size={15} aria-hidden="true" />
         {pending ? "Requesting…" : "Run now"}
       </Button>
-      {message && (
-        <p className="text-sm text-text-muted max-w-xs" role="status">
-          {message}
-        </p>
-      )}
+      <div className="max-w-xs">
+        <FormFeedback result={result} />
+      </div>
     </div>
   );
 }

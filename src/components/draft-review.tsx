@@ -1,5 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { usePendingAction } from "@/hooks/use-pending-action";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { FieldMessage } from "@/components/field-message";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
@@ -47,7 +50,9 @@ export function DraftReview({
 }) {
   const router = useRouter();
   const [result, setResult] = useState<ActionResult | null>(null);
-  const [pending, setPending] = useState(false);
+  const { pending, active, begin, finish } = usePendingAction();
+  const [confirm, setConfirm] = useState<"discard" | "regenerate" | null>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
   const [resume, setResume] = useState(
     resumes.some((r) => r.id === selectedResume)
       ? selectedResume
@@ -80,22 +85,7 @@ export function DraftReview({
     operation: "edit" | "discard" | "regenerate",
     values?: Values,
   ) {
-    if (
-      operation === "discard" &&
-      !window.confirm(
-        "Discard this draft? All earlier revisions will remain in history.",
-      )
-    )
-      return;
-    if (
-      operation === "regenerate" &&
-      form.formState.isDirty &&
-      !window.confirm(
-        "Regenerate without saving these edits? Your last saved revision will remain in history.",
-      )
-    )
-      return;
-    setPending(true);
+    if (!begin(operation)) return;
     setResult(null);
     try {
       const response =
@@ -125,6 +115,7 @@ export function DraftReview({
             });
       setResult(response);
       if (response.ok && response.id) {
+        setConfirm(null);
         form.reset(form.getValues());
         router.push(`/queue/${response.id}`);
         router.refresh();
@@ -132,7 +123,7 @@ export function DraftReview({
     } catch {
       setResult({ ok: false, message: "Draft operation failed. Try again." });
     } finally {
-      setPending(false);
+      finish();
     }
   }
   return (
@@ -154,14 +145,20 @@ export function DraftReview({
           </label>
           <textarea
             id="draft-letter"
+            aria-invalid={!!form.formState.errors.letter}
+            aria-describedby="draft-letter-message"
             rows={14}
             className="field-input max-w-[70ch]"
             disabled={!editable || pending}
             {...form.register("letter")}
           />
-          <p className="field-error">{form.formState.errors.letter?.message}</p>
+          <FieldMessage
+            id="draft-letter-message"
+            error={form.formState.errors.letter?.message}
+            hint="Only use facts supported by your resume and verified profile."
+          />
         </section>
-        <section className="panel mt-4">
+        <section className="panel mt-6">
           <h2 className="mb-4">Proposed answers</h2>
           <div className="space-y-4">
             {content.answers.map((a, i) => (
@@ -198,19 +195,23 @@ export function DraftReview({
                 )}
                 <textarea
                   id={`answer-${i}`}
+                  aria-invalid={!!form.formState.errors.answers?.[i]?.value}
+                  aria-describedby={`answer-message-${i}`}
                   className="field-input mt-2"
                   rows={2}
                   disabled={!editable || pending}
                   {...form.register(`answers.${i}.value`)}
                 />
-                <p className="field-error">
-                  {form.formState.errors.answers?.[i]?.value?.message}
-                </p>
+                <FieldMessage
+                  id={`answer-message-${i}`}
+                  error={form.formState.errors.answers?.[i]?.value?.message}
+                  hint="Review this answer before use."
+                />
               </div>
             ))}
           </div>
         </section>
-        <section className="panel mt-4">
+        <section className="panel mt-6">
           <h2 className="mb-2">Resume emphasis diff</h2>
           <p className="field-hint mb-4">
             Selection and order only. Original uploaded bytes stay unchanged.
@@ -260,29 +261,53 @@ export function DraftReview({
           </label>
           <input
             id="emphasis-order"
+            aria-invalid={!!form.formState.errors.order}
+            aria-describedby="emphasis-message"
             className="field-input"
             disabled={!editable || pending}
             {...form.register("order")}
           />
+          <FieldMessage
+            id="emphasis-message"
+            error={form.formState.errors.order?.message}
+            hint="Choose numbers from the original order above."
+          />
         </section>
         {editable && (
-          <div className="panel mt-4">
+          <div className="panel mt-6">
             <label className="flex min-h-11 items-center gap-2">
-              <input type="checkbox" {...form.register("confirmed")} />I confirm
-              edited claims and answers contain only facts I can support.
+              <input
+                type="checkbox"
+                disabled={pending}
+                aria-invalid={!!form.formState.errors.confirmed}
+                aria-describedby="draft-confirmed-message"
+                {...form.register("confirmed")}
+              />
+              I confirm edited claims and answers contain only facts I can
+              support.
             </label>
-            <p className="field-error">
-              {form.formState.errors.confirmed?.message}
-            </p>
+            <FieldMessage
+              id="draft-confirmed-message"
+              error={form.formState.errors.confirmed?.message}
+              hint="Your confirmation is required to save a revision."
+            />
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button disabled={pending} type="submit">
-                {pending ? "Saving…" : "Save revision"}
+              <Button
+                disabled={pending}
+                loading={active === "edit"}
+                type="submit"
+              >
+                {active === "edit" ? "Saving…" : "Save revision"}
               </Button>
               <Button
                 type="button"
-                variant="ghost"
+                variant="destructive"
                 disabled={pending}
-                onClick={() => perform("discard")}
+                onClick={(event) => {
+                  returnFocus.current = event.currentTarget;
+                  setResult(null);
+                  setConfirm("discard");
+                }}
               >
                 Discard draft
               </Button>
@@ -291,7 +316,7 @@ export function DraftReview({
         )}
       </form>
       {editable && (
-        <section className="panel mt-4">
+        <section className="panel mt-6">
           <h2 className="mb-4">Regenerate</h2>
           <label htmlFor="draft-resume" className="field-label">
             Resume version
@@ -353,13 +378,42 @@ export function DraftReview({
             type="button"
             variant="secondary"
             disabled={pending || !resumes.length}
-            onClick={() => perform("regenerate")}
+            loading={active === "regenerate"}
+            onClick={(event) => {
+              if (form.formState.isDirty) {
+                returnFocus.current = event.currentTarget;
+                setResult(null);
+                setConfirm("regenerate");
+              } else void perform("regenerate");
+            }}
           >
-            Regenerate draft
+            {active === "regenerate" ? "Regenerating…" : "Regenerate draft"}
           </Button>
         </section>
       )}
-      <FormFeedback result={result} />
+      <FormFeedback result={confirm ? null : result} />
+      <ConfirmationDialog
+        open={confirm !== null}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => (confirm ? perform(confirm) : undefined)}
+        title={
+          confirm === "discard"
+            ? "Discard this draft?"
+            : "Regenerate without saving edits?"
+        }
+        description={
+          confirm === "discard"
+            ? "This draft will be marked discarded. Unsaved edits will be lost, and earlier saved revisions remain in history. Nothing is submitted."
+            : "Your unsaved edits will be replaced by a new draft. The last saved revision remains in history. If regeneration fails, your edits stay here."
+        }
+        confirmLabel={
+          confirm === "discard" ? "Discard draft" : "Regenerate draft"
+        }
+        pendingLabel={confirm === "discard" ? "Discarding…" : "Regenerating…"}
+        pending={pending}
+        result={result}
+        returnFocus={returnFocus}
+      />
     </div>
   );
 }

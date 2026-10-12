@@ -104,7 +104,7 @@ export default async function Settings() {
             {logs.map((l) => (
               <li className="break-words py-3 text-sm" key={l.id}>
                 {l.provider} · {l.feature} · {l.model} · {l.result}
-                <p className="text-xs text-text-muted">
+                <p className="text-sm text-text-muted">
                   {l.createdAt.toISOString()} · Fields: {l.fields.join(", ")}
                 </p>
               </li>

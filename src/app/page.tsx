@@ -149,7 +149,7 @@ export default async function Dashboard() {
           <article className="panel metric" key={metric.label}>
             <h2>{metric.label}</h2>
             <p className="metric-value">{metric.value ?? "Unavailable"}</p>
-            <p className="text-xs text-text-muted">
+            <p className="text-sm text-text-muted">
               {metric.value === null
                 ? "Requires a successful database query."
                 : metric.caption}

@@ -193,7 +193,7 @@ export default async function Page({
                 <summary className="cursor-pointer text-sm">
                   Saved details
                 </summary>
-                <pre className="mt-2 whitespace-pre-wrap break-all text-xs text-text-muted">
+                <pre className="mt-2 whitespace-pre-wrap break-all text-sm text-text-muted">
                   {JSON.stringify(event.details, null, 2)}
                 </pre>
               </details>

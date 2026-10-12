@@ -158,7 +158,7 @@ export default async function Page({
                 {draft.resume.filename}{" "}
                 <ProvenanceBadge provenance="user-provided" />
               </dd>
-              <dd className="mt-1 break-all font-mono text-xs">
+              <dd className="mt-1 break-all font-mono text-sm">
                 Version {draft.resume.id}
               </dd>
               <dd>
@@ -195,7 +195,7 @@ export default async function Page({
                 <li key={c.category}>
                   {c.category}: {Math.round(c.points * 10) / 10}/{c.weight} ·{" "}
                   {c.status}
-                  <p className="text-xs text-text-muted">{c.explanation}</p>
+                  <p className="text-sm text-text-muted">{c.explanation}</p>
                 </li>
               ))}
             </ul>
@@ -236,7 +236,7 @@ export default async function Page({
               </a>
             </Button>
           )}
-          <p className="mt-2 break-all text-xs text-text-muted">
+          <p className="mt-2 break-all text-sm text-text-muted">
             {draft.jobRevision.listingUrl ?? "Source URL needs your input"}{" "}
             <ProvenanceBadge provenance={evidence.listingUrl.provenance} />
           </p>

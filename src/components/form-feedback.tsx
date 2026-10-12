@@ -6,10 +6,16 @@ export function FormFeedback({ result }: { result: ActionResult | null }) {
   return (
     <p
       role={result.ok ? "status" : "alert"}
-      className={`mt-4 flex items-start gap-2 text-sm ${result.ok ? "text-success" : "text-danger"}`}
+      aria-live={result.ok ? "polite" : "assertive"}
+      aria-atomic="true"
+      className={`mt-4 flex min-w-0 items-start gap-2 rounded-[14px] border p-3 text-sm [overflow-wrap:anywhere] ${result.ok ? "border-success-border bg-success-soft" : "border-danger-border bg-danger-soft"}`}
     >
-      <Icon size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-      {result.message}
+      <Icon
+        size={18}
+        className={`mt-0.5 shrink-0 ${result.ok ? "text-success" : "text-danger"}`}
+        aria-hidden="true"
+      />
+      <span className="min-w-0 text-text">{result.message}</span>
     </p>
   );
 }

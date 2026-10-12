@@ -1,4 +1,5 @@
 "use client";
+import { usePendingAction } from "@/hooks/use-pending-action";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { importJobFileAction } from "@/app/discover/actions";
@@ -9,13 +10,13 @@ import { FormFeedback } from "@/components/form-feedback";
 export function JobFileImport() {
   const router = useRouter();
   const form = useRef<HTMLFormElement>(null);
-  const [pending, setPending] = useState(false);
+  const { pending, begin, finish } = usePendingAction();
   const [selected, setSelected] = useState(false);
   const [result, setResult] = useState<ActionResult | null>(null);
   useUnsavedChanges(selected);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPending(true);
+    if (!begin()) return;
     setResult(null);
     try {
       const response = await importJobFileAction(
@@ -34,7 +35,7 @@ export function JobFileImport() {
           "The file import request failed. Check the file limit and try again.",
       });
     } finally {
-      setPending(false);
+      finish();
     }
   }
   return (
@@ -49,6 +50,7 @@ export function JobFileImport() {
         type="file"
         accept=".csv,.json,text/csv,application/json"
         required
+        disabled={pending}
         onChange={(event) => setSelected(!!event.target.files?.length)}
         aria-describedby="job-file-hint"
       />
@@ -57,7 +59,7 @@ export function JobFileImport() {
         description, and optional job fields. All rows are validated before any
         job is saved.
       </p>
-      <details className="mt-4 text-xs text-text-muted">
+      <details className="mt-4 text-sm text-text-muted">
         <summary className="min-h-11 cursor-pointer py-3">
           Show file format
         </summary>
@@ -80,7 +82,7 @@ export function JobFileImport() {
           example jobs are added.
         </p>
       </details>
-      <Button variant="secondary" className="mt-4" disabled={pending}>
+      <Button variant="secondary" className="mt-4" loading={pending}>
         {pending ? "Importing…" : "Import job list"}
       </Button>
       <FormFeedback result={result} />

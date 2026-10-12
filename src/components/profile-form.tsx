@@ -1,4 +1,5 @@
 "use client";
+import { usePendingAction } from "@/hooks/use-pending-action";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -57,146 +58,157 @@ export function ProfileForm({
   facts: ProfileFacts;
   resumes: { id: string; filename: string }[];
 }) {
+  const { pending, begin, finish } = usePendingAction();
   const router = useRouter();
   const [result, setResult] = useState<ActionResult | null>(null);
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isDirty, isSubmitting, dirtyFields },
+    formState: { errors, isDirty, dirtyFields },
   } = useForm<ProfileInput>({
     resolver: zodResolver(profileInputSchema),
     defaultValues: defaults,
   });
   useUnsavedChanges(isDirty);
   async function submit(values: ProfileInput) {
+    if (!begin()) return;
     setResult(null);
-    let response: ActionResult;
     try {
-      response = await saveProfileAction(values);
+      const response = await saveProfileAction(values);
+      setResult(response);
+      if (response.ok) {
+        reset({
+          ...values,
+          expectedRevision: values.expectedRevision + 1,
+          confirmed: false,
+        });
+        router.refresh();
+      }
     } catch {
-      response = {
+      setResult({
         ok: false,
         message:
           "The save request failed. Your changes are still unsaved; try again.",
-      };
-    }
-    setResult(response);
-    if (response.ok) {
-      reset({
-        ...values,
-        expectedRevision: values.expectedRevision + 1,
-        confirmed: false,
       });
-      router.refresh();
+    } finally {
+      finish();
     }
   }
+
   return (
     <form onSubmit={handleSubmit(submit)} noValidate>
-      <div className="form-grid">
-        {fields.map((field) => (
-          <div
-            key={field.key}
-            className={field.type === "textarea" ? "md:col-span-2" : ""}
-          >
-            <label htmlFor={`profile-${field.key}`} className="field-label">
-              {field.label}
-              <ProvenanceBadge
-                provenance={
-                  dirtyFields[field.key]
-                    ? "user-provided"
-                    : ["skills", "absentSkills", "projects"].includes(field.key)
-                      ? (field.key === "skills"
-                          ? facts.skills
-                          : field.key === "absentSkills"
-                            ? facts.absentSkills
-                            : facts.projects
-                        ).length
-                        ? "verified"
-                        : "unknown"
-                      : field.key !== "skills" &&
-                          field.key !== "absentSkills" &&
-                          field.key !== "projects"
-                        ? facts[field.key].evidence.provenance
-                        : "unknown"
-                }
+      <fieldset disabled={pending} className="min-w-0">
+        <div className="form-grid">
+          {fields.map((field) => (
+            <div
+              key={field.key}
+              className={field.type === "textarea" ? "md:col-span-2" : ""}
+            >
+              <label htmlFor={`profile-${field.key}`} className="field-label">
+                {field.label}
+                <ProvenanceBadge
+                  provenance={
+                    dirtyFields[field.key]
+                      ? "user-provided"
+                      : ["skills", "absentSkills", "projects"].includes(
+                            field.key,
+                          )
+                        ? (field.key === "skills"
+                            ? facts.skills
+                            : field.key === "absentSkills"
+                              ? facts.absentSkills
+                              : facts.projects
+                          ).length
+                          ? "verified"
+                          : "unknown"
+                        : field.key !== "skills" &&
+                            field.key !== "absentSkills" &&
+                            field.key !== "projects"
+                          ? facts[field.key].evidence.provenance
+                          : "unknown"
+                  }
+                />
+              </label>
+              {field.type === "textarea" ? (
+                <textarea
+                  id={`profile-${field.key}`}
+                  className="field-input min-h-24"
+                  {...register(field.key)}
+                  aria-invalid={!!errors[field.key]}
+                  aria-describedby={`hint-${field.key}`}
+                />
+              ) : (
+                <input
+                  id={`profile-${field.key}`}
+                  type={field.type}
+                  className="field-input"
+                  {...register(field.key)}
+                  aria-invalid={!!errors[field.key]}
+                  aria-describedby={`hint-${field.key}`}
+                />
+              )}
+              <FieldMessage
+                id={`hint-${field.key}`}
+                error={errors[field.key]?.message}
+                hint="Leave blank if unknown. Needs your input until explicitly confirmed."
               />
-            </label>
-            {field.type === "textarea" ? (
-              <textarea
-                id={`profile-${field.key}`}
-                className="field-input min-h-24"
-                {...register(field.key)}
-                aria-invalid={!!errors[field.key]}
-                aria-describedby={`hint-${field.key}`}
-              />
-            ) : (
-              <input
-                id={`profile-${field.key}`}
-                type={field.type}
-                className="field-input"
-                {...register(field.key)}
-                aria-invalid={!!errors[field.key]}
-                aria-describedby={`hint-${field.key}`}
-              />
-            )}
-            <FieldMessage
-              id={`hint-${field.key}`}
-              error={errors[field.key]?.message}
-              hint="Leave blank if unknown. Needs your input until explicitly confirmed."
-            />
-          </div>
-        ))}
-      </div>
-      <div className="mt-4">
-        <label htmlFor="profile-resume" className="field-label">
-          Resume version used as reference
-        </label>
-        <select
-          id="profile-resume"
-          className="field-input"
-          {...register("resumeVersionId")}
-        >
-          <option value="">No resume selected</option>
-          {resumes.map((resume) => (
-            <option key={resume.id} value={resume.id}>
-              {resume.filename} · {resume.id.slice(0, 8)}
-            </option>
+            </div>
           ))}
-        </select>
-      </div>
-      <label className="mt-4 flex min-h-11 items-start gap-3 text-sm">
-        <input
-          type="checkbox"
-          className="mt-1 size-4"
-          {...register("confirmed")}
-          aria-invalid={!!errors.confirmed}
-        />
-        <span>
-          I confirm the entered facts and skills are accurate and reflect my
-          resume or my verified profile. Saving creates a verified profile
-          revision.
-        </span>
-      </label>
-      {errors.confirmed && (
-        <FieldMessage
-          id="profile-confirmation-error"
-          error={errors.confirmed.message}
-          hint="Confirm facts before saving."
-        />
-      )}
-      <p className="mt-4 text-xs text-text-muted">
-        Sensitive eligibility and demographic answers are not collected or
-        guessed here. You will provide them yourself when needed.
-      </p>
-      <div className="mt-4 flex items-center gap-4">
-        <Button disabled={isSubmitting}>
-          {isSubmitting ? "Saving…" : "Save verified profile"}
-        </Button>
-        {isDirty && (
-          <span className="text-xs text-warning">Unsaved changes</span>
+        </div>
+        <div className="mt-4">
+          <label htmlFor="profile-resume" className="field-label">
+            Resume version used as reference
+          </label>
+          <select
+            id="profile-resume"
+            className="field-input"
+            {...register("resumeVersionId")}
+          >
+            <option value="">No resume selected</option>
+            {resumes.map((resume) => (
+              <option key={resume.id} value={resume.id}>
+                {resume.filename} · {resume.id.slice(0, 8)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <label className="mt-4 flex min-h-11 items-start gap-3 text-sm">
+          <input
+            type="checkbox"
+            className="mt-1 size-4"
+            {...register("confirmed")}
+            aria-invalid={!!errors.confirmed}
+            aria-describedby={
+              errors.confirmed ? "profile-confirmation-error" : undefined
+            }
+          />
+          <span>
+            I confirm the entered facts and skills are accurate and reflect my
+            resume or my verified profile. Saving creates a verified profile
+            revision.
+          </span>
+        </label>
+        {errors.confirmed && (
+          <FieldMessage
+            id="profile-confirmation-error"
+            error={errors.confirmed.message}
+            hint="Confirm facts before saving."
+          />
         )}
-      </div>
+        <p className="mt-4 text-sm text-text-muted">
+          Sensitive eligibility and demographic answers are not collected or
+          guessed here. You will provide them yourself when needed.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          <Button loading={pending}>
+            {pending ? "Saving…" : "Save verified profile"}
+          </Button>
+          {isDirty && (
+            <span className="text-sm text-warning">Unsaved changes</span>
+          )}
+        </div>
+      </fieldset>
       <FormFeedback result={result} />
     </form>
   );

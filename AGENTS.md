@@ -30,7 +30,7 @@ These rules apply to every session. If a task conflicts with them, stop and ask.
 
 - Next.js App Router, strict TypeScript, Tailwind, shadcn/ui, PostgreSQL, Prisma, Zod, Inngest. Use npm. Inspect installed versions first and follow docs for the versions actually used.
 - No Redis, Kubernetes, or microservices. Ask before adding paid services or changing the architecture significantly.
-- Dark AMOLED theme only. No theme switch. All UI work must follow DESIGN.md (tokens, components, provenance badges, layout). Read it before building any screen.
+- Preserve the user-approved Light / Dark / System theme choice. All UI work must follow DESIGN.md (tokens, components, provenance badges, layout). Read it before building any screen.
 - Do not suppress TypeScript errors or disable lint rules to pass checks. Fix root causes.
 - Timezone: Asia/Kolkata for all "daily" limits, dashboard "today" figures, and follow-up dates. Store timestamps in UTC.
 - Deterministic matching must work with no AI key. AI is optional and supplementary.
@@ -38,5 +38,4 @@ These rules apply to every session. If a task conflicts with them, stop and ask.
 ## Working style
 
 - Inspect before modifying. Explain the approach before substantial architectural changes.
-- Work in small phases. At the end of each phase: run lint, typecheck, tests, and build; then report what changed, files changed, commands run, test results, and known limitations.
-- **STOP after each phase report and wait for the user's approval before starting the next phase.**
+- Work in small phases. At the end of each phase, run lint, typecheck, tests, and build. Continue through the authorized phases without mandatory phase reports or approval gates.

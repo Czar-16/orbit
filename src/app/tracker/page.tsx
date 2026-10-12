@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClipboardList } from "lucide-react";
 import type { Metadata } from "next";
 import { trackerFilterSchema, statuses, statusLabels } from "@/lib/tracking";
 import { queryTracker } from "@/lib/tracker-query";
@@ -239,8 +240,16 @@ export default async function Page({
           );
         })}
         {!result.entries.length && (
-          <div className="panel">
-            <p>No applications match these filters.</p>
+          <div className="panel empty-state">
+            <ClipboardList
+              size={28}
+              className="text-text-muted"
+              aria-hidden="true"
+            />
+            <p>
+              No applications match these filters. Reset your filters or import
+              a job to get started.
+            </p>
             <Link
               href="/discover"
               className="inline-flex min-h-11 items-center underline"
@@ -250,7 +259,10 @@ export default async function Page({
           </div>
         )}
       </div>
-      <nav aria-label="Tracker pagination" className="mt-4 flex gap-4">
+      <nav
+        aria-label="Tracker pagination"
+        className="mt-4 flex flex-wrap gap-4"
+      >
         {result.page > 1 && (
           <Link
             className="inline-flex min-h-11 items-center underline"

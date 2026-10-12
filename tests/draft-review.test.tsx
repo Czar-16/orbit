@@ -1,4 +1,11 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, it, expect, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
@@ -97,5 +104,90 @@ describe("draft review", () => {
     expect(
       screen.queryByRole("button", { name: "Save revision" }),
     ).not.toBeInTheDocument();
+  });
+  it("cancels draft discard without losing edits and returns focus", async () => {
+    const user = userEvent.setup();
+    render(<DraftReview {...props} />);
+    const letter = screen.getByLabelText("Review every claim before use");
+    await user.clear(letter);
+    await user.type(letter, "An unsaved, user-provided draft.");
+    const discard = screen.getByRole("button", { name: "Discard draft" });
+    await user.click(discard);
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      "earlier saved revisions remain in history",
+    );
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(discard).toHaveFocus();
+    expect(letter).toHaveValue("An unsaved, user-provided draft.");
+    expect(mocks.revise).not.toHaveBeenCalled();
+  });
+  it("confirms regeneration of unsaved edits and retains them after rejection or failed results", async () => {
+    const user = userEvent.setup();
+    render(<DraftReview {...props} />);
+    const letter = screen.getByLabelText("Review every claim before use");
+    await user.clear(letter);
+    await user.type(letter, "Unsaved input");
+    const regenerate = screen.getByRole("button", { name: "Regenerate draft" });
+    await user.click(regenerate);
+    await user.keyboard("{Escape}");
+    expect(regenerate).toHaveFocus();
+    expect(mocks.prepare).not.toHaveBeenCalled();
+    mocks.prepare.mockRejectedValueOnce(new Error("offline"));
+    await user.click(regenerate);
+    const dialog = screen.getByRole("dialog");
+    await user.click(
+      within(dialog).getByRole("button", { name: "Regenerate draft" }),
+    );
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "Try again",
+    );
+    expect(letter).toHaveValue("Unsaved input");
+    expect(mocks.push).not.toHaveBeenCalled();
+    mocks.prepare.mockResolvedValueOnce({
+      ok: false,
+      message: "Provider unavailable. Select Off and try again.",
+    });
+    await user.click(
+      within(dialog).getByRole("button", { name: "Regenerate draft" }),
+    );
+    await waitFor(() =>
+      expect(within(dialog).getByRole("alert")).toHaveTextContent("Select Off"),
+    );
+    expect(letter).toHaveValue("Unsaved input");
+  });
+  it("protects discard while pending and navigates only after success", async () => {
+    const user = userEvent.setup();
+    let resolve!: (value: { ok: true; id: string; message: string }) => void;
+    mocks.revise.mockReturnValue(
+      new Promise((done) => {
+        resolve = done;
+      }),
+    );
+    render(<DraftReview {...props} />);
+    await user.click(screen.getByRole("button", { name: "Discard draft" }));
+    const dialog = screen.getByRole("dialog");
+    const confirm = within(dialog).getByRole("button", {
+      name: "Discard draft",
+    });
+    fireEvent.click(confirm);
+    fireEvent.click(confirm);
+    expect(mocks.revise).toHaveBeenCalledOnce();
+    expect(mocks.revise).toHaveBeenCalledWith(
+      expect.objectContaining({ operation: "discard", confirmed: true }),
+    );
+    await user.keyboard("{Escape}");
+    expect(dialog).toBeInTheDocument();
+    expect(mocks.push).not.toHaveBeenCalled();
+    await act(async () =>
+      resolve({
+        ok: true,
+        id: "discarded-revision",
+        message: "Discarded; history retained.",
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(mocks.push).toHaveBeenCalledWith("/queue/discarded-revision");
   });
 });

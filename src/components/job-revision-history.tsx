@@ -14,7 +14,7 @@ export function JobRevisionHistory({ history }: { history: Revision[] }) {
   return (
     <section className="panel mt-4">
       <h2 className="mb-4">Revision history</h2>
-      <ul className="space-y-4 text-xs text-text-muted">
+      <ul className="space-y-4 text-sm text-text-muted">
         {history.map((item) => {
           const snapshot = readListingHistory(item);
           return (

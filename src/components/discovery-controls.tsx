@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   runDiscoveryAction,
+  runDailyAction,
   sourceControlAction,
 } from "@/app/discover/discovery-actions";
 import { type ActionResult } from "@/lib/action-result";
@@ -53,13 +54,19 @@ export function DiscoveryControls({
         {processed}/{limit} new relevant jobs processed today (Asia/Kolkata).
         Each query runs at most once per day; provider quota four requests/day,
         with at least 31 seconds between requests. Listing pages are never
-        fetched. Daily scheduling arrives in Phase 8.
+        fetched. Daily scheduling uses the local Inngest server; manual
+        discovery uses the same limits when that server is unavailable.
       </p>
+      <Button disabled={pending} onClick={() => act(runDailyAction)}>
+        {pending ? "Requesting…" : "Run now"}
+      </Button>
       <Button
+        className="ml-2"
+        variant="secondary"
         disabled={pending || processed >= limit}
         onClick={() => act(runDiscoveryAction)}
       >
-        {pending ? "Running…" : "Run discovery now"}
+        Run manual discovery
       </Button>
       <ul className="mt-4 space-y-3">
         {sources.map((s) => (

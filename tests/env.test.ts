@@ -5,6 +5,7 @@ describe("startup environment", () => {
     expect(validateEnvironment({})).toEqual({
       ORBIT_MODE: "local",
       ORBIT_ALLOW_PAID_AI: "false",
+      ORBIT_SCHEDULER_ENABLED: "true",
     });
   });
   it("accepts the production local shell", () => {

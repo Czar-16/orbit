@@ -19,6 +19,7 @@ export const localDatabaseUrlSchema = z
     }
   }, "Use a credentialed loopback PostgreSQL URL without query parameters.");
 const environmentSchema = z.object({
+  ORBIT_SCHEDULER_ENABLED: z.enum(["true", "false"]).default("true"),
   OPENAI_API_KEY: z.string().min(1).max(500).optional(),
   OPENAI_MODEL: z
     .string()

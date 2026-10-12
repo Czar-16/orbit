@@ -2,6 +2,19 @@
 import { revalidatePath } from "next/cache";
 import { runDiscovery, sourceControls } from "@/lib/discovery-service";
 import { safeActionError } from "@/lib/action-result";
+import { dispatchDaily } from "@/lib/scheduler-dispatch";
+export async function runDailyAction() {
+  try {
+    const result = await dispatchDaily("manual");
+    revalidatePath("/", "layout");
+    return {
+      ok: result.state !== "unavailable" && result.state !== "disabled",
+      message: result.message,
+    };
+  } catch (error) {
+    return safeActionError(error);
+  }
+}
 export async function runDiscoveryAction() {
   try {
     const result = await runDiscovery();

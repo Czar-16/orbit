@@ -16,6 +16,8 @@ export const exportEntities = [
   "followUps",
   "discoveryRuns",
   "outboundLogs",
+  "processingRuns",
+  "discoveryAttempts",
 ] as const;
 export type ExportEntity = (typeof exportEntities)[number];
 export async function exportWorkspace() {
@@ -39,6 +41,8 @@ export async function exportWorkspace() {
         followUps,
         discoveryRuns,
         outboundLogs,
+        processingRuns,
+        discoveryAttempts,
       ] = await Promise.all([
         tx.workspace.findMany({ where: { id: workspaceId } }),
         tx.profileVersion.findMany({ where, orderBy: { revision: "asc" } }),
@@ -78,9 +82,11 @@ export async function exportWorkspace() {
         tx.followUp.findMany({ where }),
         tx.discoveryRun.findMany({ where }),
         tx.outboundDataLog.findMany({ where }),
+        tx.processingRun.findMany({ where }),
+        tx.discoveryAttempt.findMany({ where }),
       ]);
       return {
-        schemaVersion: 1,
+        schemaVersion: 2,
         generatedAt: new Date().toISOString(),
         timezone: "Asia/Kolkata",
         notice:
@@ -101,6 +107,8 @@ export async function exportWorkspace() {
           followUps,
           discoveryRuns,
           outboundLogs,
+          processingRuns,
+          discoveryAttempts,
         },
       };
     },

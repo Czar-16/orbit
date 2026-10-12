@@ -2,18 +2,10 @@ import "server-only";
 import { z } from "zod";
 import { requireWorkspace } from "@/lib/db";
 import { getPreferences } from "@/lib/preference-service";
-import {
-  sourceConfigSchema,
-  sourceUrl,
-  normalizeSourceJobs,
-  sourceRelevant,
-} from "@/lib/job-sources";
+import { sourceUrl } from "@/lib/job-sources";
 import { publicApiJson } from "@/lib/public-api";
-import { importJobs } from "@/lib/job-service";
-import { localDate, todayInterval } from "@/lib/time";
+import { todayInterval } from "@/lib/time";
 import { InputError } from "@/lib/action-result";
-import { profileFactsSchema } from "@/lib/profile-schema";
-import { weightedMatch, weightedJobSchema } from "@/lib/weighted-matching";
 const labels = {
   himalayas: "Himalayas",
   remotive: "Remotive",
@@ -158,166 +150,17 @@ export async function discoveryState() {
     preferences: (await getPreferences()).values,
   };
 }
+// Synchronous fallback uses exactly the same reservations as the daily worker.
 export async function runDiscovery(
   fetchJson: (url: URL) => Promise<unknown> = publicApiJson,
 ) {
-  await ensureDiscoverySources();
-  const { database, workspaceId } = await requireWorkspace();
-  const prefs = (await getPreferences()).values;
-  const latest = await database.profileVersion.findFirst({
-    where: { workspaceId },
-    orderBy: { revision: "desc" },
-  });
-  const profile = latest ? profileFactsSchema.parse(latest.facts) : null;
-  const sources = await database.source.findMany({
-    where: {
-      workspaceId,
-      enabled: true,
-      removedAt: null,
-      kind: "OFFICIAL_API",
-      decision: "ALLOWED",
-    },
-    orderBy: { createdAt: "asc" },
-  });
-  const summaries: {
-    source: string;
-    state: string;
-    fetched: number;
-    imported: number;
-    duplicates: number;
-    error?: string;
-  }[] = [];
+  const { enabledSources, processSource } =
+    await import("@/lib/source-processing");
+  const sources = await enabledSources();
+  const summaries = [];
   for (const source of sources) {
-    const config = sourceConfigSchema.parse({
-      provider: source.provider,
-      companyQuery: source.companyQuery,
-    });
-    const reserved = await database.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM "Workspace" WHERE id = ${workspaceId}::uuid FOR UPDATE`;
-      const day = localDate();
-      const interval = todayInterval();
-      if (
-        (await tx.job.count({
-          where: {
-            workspaceId,
-            processedRelevant: true,
-            discoveredAt: { gte: interval.start, lt: interval.end },
-          },
-        })) >= prefs.dailyLimit
-      )
-        return null;
-      if (
-        await tx.discoveryRun.findUnique({
-          where: {
-            workspaceId_sourceId_day: { workspaceId, sourceId: source.id, day },
-          },
-        })
-      )
-        return null;
-      if (
-        (await tx.discoveryRun.count({
-          where: { workspaceId, provider: config.provider, day },
-        })) >= 4
-      )
-        return null;
-      const last = await tx.discoveryRun.findFirst({
-        where: { workspaceId, provider: config.provider },
-        orderBy: { startedAt: "desc" },
-      });
-      if (last && Date.now() - last.startedAt.getTime() < 31000) return null;
-      return tx.discoveryRun.create({
-        data: {
-          workspaceId,
-          sourceId: source.id,
-          provider: config.provider,
-          day,
-          state: "running",
-        },
-      });
-    });
-    if (!reserved) {
-      summaries.push({
-        source: source.label,
-        state: "skipped (daily cap, already attempted, or spacing)",
-        fetched: 0,
-        imported: 0,
-        duplicates: 0,
-      });
-      continue;
-    }
-    try {
-      const response = await fetchJson(sourceUrl(config, prefs));
-      const normalized = normalizeSourceJobs(config.provider, response);
-      const eligible = normalized
-        .filter((j) => sourceRelevant(j, prefs))
-        .filter(
-          (j) =>
-            !weightedMatch(
-              weightedJobSchema.parse({
-                compensationMin: j.compensationMin || null,
-                compensationMax: j.compensationMax || null,
-                title: j.title || null,
-                location: j.location || null,
-                workArrangement: j.workArrangement || null,
-                employmentType: j.employmentType || null,
-                description: j.description || null,
-                experienceRequirement: j.experienceRequirement || null,
-                skills: [],
-                currency: j.currency || null,
-                compensationPeriod: j.compensationPeriod || null,
-              }),
-              profile,
-              prefs,
-            ).flags.some((f) => f.status === "conflict"),
-        );
-      const imported = eligible.length
-        ? await importJobs(
-            eligible.map(({ jobId, expectedRevision, ...j }) => {
-              void jobId;
-              void expectedRevision;
-              return j;
-            }),
-            undefined,
-            {
-              identity: source.identity,
-              label: source.label,
-              provider: config.provider,
-            },
-          )
-        : { imported: 0, duplicates: 0 };
-      await database.discoveryRun.update({
-        where: { id: reserved.id },
-        data: {
-          state: "success",
-          fetched: normalized.length,
-          ...imported,
-          finishedAt: new Date(),
-        },
-      });
-      summaries.push({
-        source: source.label,
-        state: "success",
-        fetched: normalized.length,
-        ...imported,
-      });
-    } catch (error) {
-      const detail =
-        error instanceof InputError
-          ? error.message
-          : "Source response or intake failed validation. No successful sync is assumed.";
-      await database.discoveryRun.update({
-        where: { id: reserved.id },
-        data: { state: "failed", error: detail, finishedAt: new Date() },
-      });
-      summaries.push({
-        source: source.label,
-        state: "failed",
-        fetched: 0,
-        imported: 0,
-        duplicates: 0,
-        error: detail,
-      });
-    }
+    const result = await processSource(source.id, undefined, fetchJson);
+    summaries.push(result);
   }
   return summaries;
 }

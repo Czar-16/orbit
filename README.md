@@ -1,6 +1,6 @@
 # Orbit
 
-Local job application workspace through Phase 7. Private resumes, user-verified profiles, manual intake, seven-category deterministic matching, editable preferences, saved jobs, and permitted public-API discovery work locally without an AI key. Versioned application preparation/review works without AI; manual application tracking, notes, follow-ups and complete JSON/CSV export are available. Scheduling (Phase 8) remains unavailable.
+Local job application workspace through Phase 8. Private resumes, user-verified profiles, manual intake, seven-category deterministic matching, editable preferences, saved jobs, and permitted public-API discovery work locally without an AI key. Versioned application preparation/review works without AI; manual application tracking, notes, follow-ups and complete JSON/CSV export are available. Local Inngest daily scheduling, startup catch-up, bounded retries and daily processing summaries are available.
 
 ## Setup
 
@@ -15,6 +15,8 @@ npm run dev
 Open the loopback URL printed by Next.js, normally http://127.0.0.1:3000. If that port is occupied, dev selects the next available port. Restart a previously running dev server after pulling these changes so it loads the updated dependencies and ignored local database configuration.
 
 `db:setup` generates private random credentials in ignored `.env.local`, starts the dedicated PostgreSQL service on 127.0.0.1:55432, applies migrations, and initializes an empty local workspace. It never seeds personal facts or jobs. See [database setup](docs/DATABASE.md). The shell also runs without database configuration, showing setup-needed states; no AI key is required.
+
+Start `npm run inngest:dev` in another terminal for daily scheduling. It binds to loopback port 8288 and registers Orbit on port 3000. See [scheduling setup and recovery](docs/SCHEDULING.md) for other app ports, daily caps and limitations.
 
 Production locally:
 
@@ -33,12 +35,12 @@ Both app scripts bind to 127.0.0.1. No authentication is implemented; add real a
 4. Save, unsave, dismiss, archive, restore, inspect, and edit jobs. Edits create revisions with listing URL/source snapshots; older revisions show unknown listing history. Filters, sorting, and pagination persist in the URL; date filters and dashboard today use Asia/Kolkata.
 5. In Settings, save matching preferences and weights. Seven categories use confirmed points out of 100 with visible unknown weight and a possible upper bound; missing information is never rescaled into a match. Explicit numeric experience, education level, absent skills, and verbatim project bullets require your confirmation in Profile. Match history pins job/profile/preference revisions. Skills coverage remains separately labeled.
 6. Inspect a job to review mandatory/preferred/unclear wording and hard-filter flags. Missing skill confirmation never proves absence; preferred Java never rejects and undisclosed salary remains unknown.
-7. Use **Run discovery now** for permitted Himalayas/Remotive/Jobicy/Remote OK public APIs. Settings allows source toggles and tracked company filters. Each query runs once per Kolkata day with four requests/provider/day and 31-second spacing. New relevant jobs share the configurable daily cap with manual intake. See [source permission review](docs/SOURCES.md). No listing page is fetched.
+7. Use **Run now** for local scheduled processing, or **Run manual discovery** for permitted Himalayas/Remotive/Jobicy/Remote OK public APIs. Settings allows source toggles and tracked company filters. Each query runs once per Kolkata day with four requests/provider/day and 31-second spacing. New relevant jobs share the configurable daily cap with manual intake. See [source permission review](docs/SOURCES.md). No listing page is fetched.
 8. Review Today’s best matches, Save/Dismiss jobs, and open the exact returned original listing to apply manually. Prepare a truthful draft from your verified profile and chosen resume, review/edit/regenerate/save/discard versions in Application queue, and open the listing for manual submission. This never marks Applied.
 
 9. In Tracker, explicitly confirm an application you submitted yourself and its Kolkata date, record later statuses, notes, next steps and follow-ups. History remains immutable. Settings exports complete JSON or CSV tables; see [tracking](docs/TRACKING.md) and [private backup/restore](docs/BACKUP.md).
 
-Nothing is submitted. Open original listing is a normal user-controlled link. Prepare application generates materials; Run discovery now ingests permitted listings. Authorized submission is disabled with an explanation. See [application preparation and optional AI data handling](docs/PREPARATION.md).
+Nothing is submitted. Open original listing is a normal user-controlled link. Prepare application generates materials; Run now queues internal processing; manual discovery ingests permitted listings. Authorized submission is disabled with an explanation. See [application preparation and optional AI data handling](docs/PREPARATION.md).
 
 ## Checks
 
@@ -48,6 +50,7 @@ npm run typecheck
 npm test
 npm run test:db
 npm run build
+npm run test:scheduler # disposable real local Inngest check; ports 3178/8288 must be free
 ```
 
 ESLint runs separately from the Next.js build. Unit/DOM tests cover navigation, confirmation/failure states, input/provenance validation, URLs, matching, filters, and Asia/Kolkata boundaries. Real integration tests use their own disposable PostgreSQL container and ignored temporary private storage, never the app database. Tests do not automate a browser or contact job listing pages.
@@ -64,7 +67,7 @@ Manual visual/keyboard inspection was not performed in this tool session. DOM an
 
 ## Limits
 
-PDF/TXT only; local bounded extraction with human review, no DOCX/OCR. Requirement classification uses a bounded English rule vocabulary. No resume removal/redaction UI yet. CSV and JSON imports support the documented fields. Lists sort and score-filter within the 1,000 most recent records matching database filters; recording matches handles up to 200 recent unarchived jobs. Missing job/profile information requires your input. Authorized submissions and Inngest scheduling remain future work. Tracking follow-ups are local reminders with no notification delivery. Buffered export is intended for a local workspace; use pg_dump for large backups. Optional AI adapters are implemented but real-provider untested; default preparation is deterministic. Resume emphasis is a selection/order display, not an exported replacement PDF. Discovery currently requests only the first 20 records per query. ATS board ingestion and credentialed Adzuna/Jooble adapters remain disabled where permission/configuration is unresolved. Unknown salary fields, unsupported pay periods and free-form Remotive salary text are not guessed.
+PDF/TXT only; local bounded extraction with human review, no DOCX/OCR. Requirement classification uses a bounded English rule vocabulary. No resume removal/redaction UI yet. CSV and JSON imports support the documented fields. Lists sort and score-filter within the 1,000 most recent records matching database filters; manual match refresh handles up to 200 recent unarchived jobs; daily processing checks all unarchived jobs in cursor batches. Missing job/profile information requires your input. Authorized submissions remain disabled. Local scheduling requires Orbit, PostgreSQL and the Inngest dev server to stay running. Tracking follow-ups are local reminders with no notification delivery. Buffered export is intended for a local workspace; use pg_dump for large backups. Optional AI adapters are implemented but real-provider untested; default preparation is deterministic. Resume emphasis is a selection/order display, not an exported replacement PDF. Discovery currently requests only the first 20 records per query. ATS board ingestion and credentialed Adzuna/Jooble adapters remain disabled where permission/configuration is unresolved. Unknown salary fields, unsupported pay periods and free-form Remotive salary text are not guessed.
 
 Production dependencies audit clean. Five high-severity entries remain in the development lint chain (eslint-config-next → Next lint plugin → fast-glob → micromatch → braces); npm has no compatible patch. ESLint 9.39.5 remains required by current plugin peer ranges despite its deprecation. Scoped Prisma-tooling overrides are explained in docs/DATABASE.md and verified through real generation/migration tests.
 

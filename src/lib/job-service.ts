@@ -25,7 +25,7 @@ import { jobEvidenceSchema } from "@/lib/job-evidence";
 import { providedEvidence, unknownEvidence } from "@/lib/provenance";
 import { profileFactsSchema } from "@/lib/profile-schema";
 import { matchSkills, MATCH_RULE_VERSION } from "@/lib/matching";
-import { todayInterval } from "@/lib/time";
+import { todayInterval, localDate } from "@/lib/time";
 import { defaultPreferences } from "@/lib/preferences";
 import { InputError } from "@/lib/action-result";
 import { sourceSnapshotSchema, captureManualSource } from "@/lib/job-history";
@@ -191,6 +191,13 @@ export async function importJobs(
     label: string;
     provider: "himalayas" | "remotive" | "jobicy" | "remoteok";
   },
+  completion?: {
+    day: string;
+    commit: (
+      tx: Prisma.TransactionClient,
+      result: { imported: number; duplicates: number; skipped: number },
+    ) => Promise<void>;
+  },
 ) {
   const parsed = jobBatchSchema.safeParse(inputs);
   if (!parsed.success)
@@ -235,6 +242,10 @@ export async function importJobs(
   return database.$transaction(
     async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Workspace" WHERE id = ${workspaceId}::uuid FOR UPDATE`;
+      if (completion && completion.day !== localDate())
+        throw new InputError(
+          "The processing day ended. No jobs were imported.",
+        );
       const prefsRecord = await tx.preferenceVersion.findFirst({
         where: { workspaceId },
         orderBy: { revision: "desc" },
@@ -343,6 +354,12 @@ export async function importJobs(
         imported++;
         if (relevant) relevantCount++;
       }
+      if (completion)
+        await completion.commit(tx, {
+          imported,
+          duplicates,
+          skipped: prepared.length - imported - duplicates,
+        });
       return { imported, duplicates };
     },
     { timeout: 15000 },
@@ -540,4 +557,77 @@ export async function refreshMatches() {
     }
   }
   return { updated, profileRevision: profile.revision };
+}
+
+// Cursor batches avoid the manual refresh's 200-job bound. Match upserts and the
+// daily count share a transaction, so replay does not inflate processing stats.
+export async function processMatchBatch(
+  runId: string,
+  cursor?: string,
+  executionId?: string,
+) {
+  const { database, workspaceId } = await requireWorkspace();
+  const jobs = await database.job.findMany({
+    where: {
+      workspaceId,
+      archivedAt: null,
+      ...(cursor ? { id: { gt: cursor } } : {}),
+    },
+    orderBy: { id: "asc" },
+    take: 25,
+    include: { latestRevision: true },
+  });
+  for (const job of jobs) {
+    await database.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Workspace" WHERE id=${workspaceId}::uuid FOR UPDATE`;
+      const run = await tx.processingRun.findFirst({
+        where: { workspaceId, id: runId },
+      });
+      if (
+        !run ||
+        run.state !== "running" ||
+        run.day !== localDate() ||
+        (executionId && run.executionId !== executionId)
+      )
+        return;
+      await tx.processingRun.update({
+        where: { id: runId },
+        data: { leaseExpiresAt: new Date(Date.now() + 600_000) },
+      });
+      const current = await tx.job.findFirst({
+        where: { workspaceId, id: job.id },
+        include: { latestRevision: true },
+      });
+      const revision = current?.latestRevision;
+      const profile = await tx.profileVersion.findFirst({
+        where: { workspaceId },
+        orderBy: { revision: "desc" },
+      });
+      const preferences = await tx.preferenceVersion.findFirst({
+        where: { workspaceId },
+        orderBy: { revision: "desc" },
+      });
+      if (!revision || !profile || !preferences) return;
+      const existing = await tx.weightedMatch.findUnique({
+        where: {
+          workspaceId_jobRevisionId_profileVersionId_preferenceVersionId_ruleVersion:
+            {
+              workspaceId,
+              jobRevisionId: revision.id,
+              profileVersionId: profile.id,
+              preferenceVersionId: preferences.id,
+              ruleVersion: WEIGHTED_RULE_VERSION,
+            },
+        },
+      });
+      if (!existing) {
+        await recordMatch(tx, workspaceId, revision);
+        await tx.processingRun.update({
+          where: { id: runId },
+          data: { matched: { increment: 1 } },
+        });
+      }
+    });
+  }
+  return { cursor: jobs.length === 25 ? jobs.at(-1)!.id : null };
 }

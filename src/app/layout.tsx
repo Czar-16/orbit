@@ -4,6 +4,8 @@ import { DM_Sans, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/app-shell";
 import { themeBootstrapScript } from "@/lib/theme";
 import { ThemeController } from "@/components/theme-controller";
+import { after } from "next/server";
+import { startupCatchUp } from "@/lib/scheduler-dispatch";
 import "./globals.css";
 const sans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
@@ -22,9 +24,12 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const status = await databaseStatus();
+  if (status.state === "ready") after(startupCatchUp);
   return (
     <html lang="en" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} /></head>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
+      </head>
       <body className={`${sans.variable} ${mono.variable}`}>
         <ThemeController />
         <AppShell importAvailable={status.state === "ready"}>

@@ -5,7 +5,10 @@ import userEvent from "@testing-library/user-event";
 import { AppShell } from "@/components/app-shell";
 import { isActiveRoute, navigation } from "@/lib/navigation";
 const route = vi.hoisted(() => ({ pathname: "/" }));
-vi.mock("next/navigation", () => ({ usePathname: () => route.pathname }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => route.pathname,
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: React.ComponentProps<"a">) => (
     <a
@@ -106,6 +109,6 @@ describe("workspace navigation", () => {
       "href",
       "/discover#import",
     );
-    expect(screen.getByRole("button", { name: "Run now" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Run now" })).toBeEnabled();
   });
 });

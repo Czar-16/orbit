@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { RunDailyButton } from "@/components/run-daily-button";
 import { usePathname } from "next/navigation";
 import {
   CircleDot,
@@ -9,7 +10,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
-  Play,
 } from "lucide-react";
 import {
   navigation,
@@ -136,17 +136,7 @@ export function AppShell({
                 </Button>
               </span>
             )}
-            <span
-              tabIndex={0}
-              role="group"
-              aria-label="Run now unavailable. Background processing is enabled in a later phase."
-              title="Background processing is enabled in a later phase."
-            >
-              <Button disabled variant="ghost" aria-describedby="run-reason">
-                <Play size={15} aria-hidden="true" />
-                Run now
-              </Button>
-            </span>
+            <RunDailyButton available={importAvailable} />
           </div>
         </header>
         <main id="main" tabIndex={-1} className="content">
@@ -158,7 +148,9 @@ export function AppShell({
                 : "Import job requires local database setup."}
             </p>
             <p id="run-reason">
-              Run now is unavailable until the background processing phase.
+              {importAvailable
+                ? "Run now queues daily processing on the local Inngest server."
+                : "Run now requires local database setup."}
             </p>
           </div>
         </main>

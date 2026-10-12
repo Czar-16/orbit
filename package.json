@@ -14,7 +14,9 @@
     "db:validate": "prisma validate",
     "db:setup": "tsx scripts/db-setup.ts",
     "db:migrate": "prisma migrate deploy",
-    "test:db": "tsx scripts/test-db.ts"
+    "test:db": "tsx scripts/test-db.ts",
+    "inngest:dev": "inngest-cli dev --host 127.0.0.1 --no-discovery -u http://127.0.0.1:3000/api/inngest --persist",
+    "test:scheduler": "tsx scripts/test-scheduler.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",
@@ -25,6 +27,7 @@
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "dotenv": "18.0.7",
+    "inngest": "4.23.0",
     "ipaddr.js": "2.5.0",
     "lucide-react": "1.55.0",
     "next": "16.4.0",
@@ -48,6 +51,7 @@
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.0",
+    "inngest-cli": "1.46.0",
     "jsdom": "26.1.0",
     "prisma": "7.10.0",
     "tailwindcss": "4.3.3",
@@ -66,6 +70,9 @@
     },
     "prisma": {
       "mysql2": "3.24.5"
+    },
+    "inngest-cli": {
+      "adm-zip": "0.6.1"
     }
   }
 }

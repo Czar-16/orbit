@@ -6,6 +6,7 @@ import { JobFileImport } from "@/components/job-file-import";
 import { discoveryState } from "@/lib/discovery-service";
 import { DiscoveryControls } from "@/components/discovery-controls";
 import { JobList } from "@/components/job-list";
+import { ProcessingSummary } from "@/components/processing-summary";
 export const metadata: Metadata = { title: "Discover jobs" };
 export const dynamic = "force-dynamic";
 export default async function Page({
@@ -32,6 +33,7 @@ export default async function Page({
         />
       ) : (
         <>
+          <ProcessingSummary />
           {discovery && (
             <DiscoveryControls
               sources={discovery.sources}

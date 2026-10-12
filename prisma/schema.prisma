@@ -35,6 +35,8 @@ model Workspace {
   preferences PreferenceVersion[]
   weightedMatches WeightedMatch[]
   discoveryRuns DiscoveryRun[]
+  processingRuns ProcessingRun[]
+  discoveryAttempts DiscoveryAttempt[]
   drafts ApplicationDraft[]
   outboundLogs OutboundDataLog[]
   applications Application[]
@@ -60,6 +62,7 @@ model ResumeVersion {
   @@index([workspaceId, createdAt])
 }
 model ProfileVersion {
+  processingRuns ProcessingRun[]
   drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
   workspaceId String @db.Uuid
@@ -180,6 +183,7 @@ model MatchResult {
 }
 
 model PreferenceVersion {
+  processingRuns ProcessingRun[]
   origin String @default("user")
   drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
@@ -225,8 +229,64 @@ model DiscoveryRun {
   error String?
   startedAt DateTime @default(now()) @db.Timestamptz(3)
   finishedAt DateTime? @db.Timestamptz(3)
+  processingRunId String? @db.Uuid
+  processingRun ProcessingRun? @relation(fields: [workspaceId, processingRunId], references: [workspaceId, id], onDelete: Restrict)
+  attemptCount Int @default(0)
+  leaseExpiresAt DateTime? @db.Timestamptz(3)
+  lastAttemptAt DateTime? @db.Timestamptz(3)
+  filtered Int @default(0)
+  skipped Int @default(0)
+  attempts DiscoveryAttempt[]
+  @@unique([workspaceId, id])
   @@unique([workspaceId, sourceId, day])
   @@index([workspaceId, provider, day])
+}
+
+model ProcessingRun {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  day String @db.VarChar(10)
+  trigger String
+  state String @default("queued")
+  revision Int @default(1)
+  queuedAt DateTime @default(now()) @db.Timestamptz(3)
+  startedAt DateTime? @db.Timestamptz(3)
+  finishedAt DateTime? @db.Timestamptz(3)
+  leaseExpiresAt DateTime? @db.Timestamptz(3)
+  executionId String?
+  attemptCount Int @default(0)
+  error String?
+  fetched Int @default(0)
+  imported Int @default(0)
+  duplicates Int @default(0)
+  filtered Int @default(0)
+  matched Int @default(0)
+  skipped Int @default(0)
+  dailyLimit Int
+  profileVersionId String? @db.Uuid
+  preferenceVersionId String? @db.Uuid
+  profile ProfileVersion? @relation(fields: [workspaceId, profileVersionId], references: [workspaceId, id], onDelete: Restrict)
+  preference PreferenceVersion? @relation(fields: [workspaceId, preferenceVersionId], references: [workspaceId, id], onDelete: Restrict)
+  discoveryRuns DiscoveryRun[]
+  @@unique([workspaceId, day])
+  @@unique([workspaceId, id])
+  @@index([workspaceId, state, day])
+}
+
+model DiscoveryAttempt {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  discoveryRunId String @db.Uuid
+  discoveryRun DiscoveryRun @relation(fields: [workspaceId, discoveryRunId], references: [workspaceId, id], onDelete: Restrict)
+  number Int
+  reservedAt DateTime @default(now()) @db.Timestamptz(3)
+  finishedAt DateTime? @db.Timestamptz(3)
+  state String @default("reserved")
+  error String?
+  @@unique([workspaceId, discoveryRunId, number])
+  @@index([workspaceId, reservedAt])
 }
 
 model ApplicationDraft {

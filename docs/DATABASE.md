@@ -49,3 +49,7 @@ Migration 202610120008 adds ApplicationDraft and OutboundDataLog, ResumeVersion 
 ## Phase 7 tracking
 
 Migration 202610120009_tracking adds Application/ApplicationEvent/FollowUp and the selected-draft ownership relation. Composite workspace/job/draft foreign keys, confirmation/date/status consistency, archive prior state, positive revisions, Kolkata-midnight follow-up dates and append-only event triggers are enforced in SQL. Existing jobs receive observable baselines, never inferred applied dates. Derived pinned match projections allow database filtering before pagination. Services lock the workspace and commit state plus event history atomically. Export uses a repeatable-read snapshot; see TRACKING.md and BACKUP.md.
+
+## Daily scheduling migration
+
+`202610130010_scheduling` adds workspace-owned ProcessingRun (unique Kolkata day) and DiscoveryAttempt, with composite ownership relations, state/counter checks and immutable completed attempt history. DiscoveryRun gains optional daily-run ownership, request reservation/lease timestamps and counters. Legacy source runs remain unattached with zero detailed attempts; their observed rows still consume provider quota. No jobs/profile facts or synthetic success rows are backfilled. New tables are included in private exports. See [scheduling](SCHEDULING.md).

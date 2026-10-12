@@ -17,3 +17,10 @@ coverage/
 .DS_Store
 src/generated/
 .test-private/
+
+# Local Inngest execution history
+.inngest/
+inngest.db*
+*.db
+*.db-wal
+*.db-shm

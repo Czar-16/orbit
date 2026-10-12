@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Database, Activity, Search, Clock3 } from "lucide-react";
+import {
+  ArrowRight,
+  ShieldCheck,
+  Database,
+  Activity,
+  Search,
+  Clock3,
+} from "lucide-react";
 import { databaseStatus, requireWorkspace } from "@/lib/db";
 import { todayInterval } from "@/lib/time";
 import { queryJobs } from "@/lib/job-query";
@@ -7,6 +14,7 @@ import { defaultFilters } from "@/lib/job-filters";
 import { JobCard } from "@/components/job-card";
 import { trackingMetrics } from "@/lib/tracker-query";
 import { ApplicationStatusBadge } from "@/components/application-status";
+import { ProcessingSummary } from "@/components/processing-summary";
 export const dynamic = "force-dynamic";
 export default async function Dashboard() {
   const status = await databaseStatus();
@@ -117,6 +125,7 @@ export default async function Dashboard() {
         <h1>Dashboard</h1>
         <p>Your application workspace, at a glance.</p>
       </div>
+      {status.state === "ready" && <ProcessingSummary />}
       <div className="setup-banner">
         <Database size={20} aria-hidden="true" />
         <div>
@@ -165,12 +174,19 @@ export default async function Dashboard() {
         </section>
       )}
       <div className="dashboard-grid">
-        <section className="panel activity-panel" aria-labelledby="recent-activity-heading">
+        <section
+          className="panel activity-panel"
+          aria-labelledby="recent-activity-heading"
+        >
           <div className="activity-heading">
-            <span className="activity-heading-icon"><Activity size={20} aria-hidden="true" /></span>
+            <span className="activity-heading-icon">
+              <Activity size={20} aria-hidden="true" />
+            </span>
             <div>
               <h2 id="recent-activity-heading">Recent activity</h2>
-              <p className="activity-caption">Application updates and discovery runs.</p>
+              <p className="activity-caption">
+                Application updates and discovery runs.
+              </p>
             </div>
           </div>
           {!tracking ? (
@@ -185,30 +201,56 @@ export default async function Dashboard() {
               <ul className="activity-feed" aria-label="Application updates">
                 {tracking.events.map((event) => (
                   <li key={event.id} className="activity-item">
-                    <span className="activity-marker" aria-hidden="true"><Activity size={16} /></span>
+                    <span className="activity-marker" aria-hidden="true">
+                      <Activity size={16} />
+                    </span>
                     <article className="activity-entry">
                       <div className="activity-title-row">
-                        <Link href={`/tracker/${event.applicationId}`} className="activity-job-link">
-                          <span>{event.application.job.latestRevision?.title ?? "Unknown role"}</span>
+                        <Link
+                          href={`/tracker/${event.applicationId}`}
+                          className="activity-job-link"
+                        >
+                          <span>
+                            {event.application.job.latestRevision?.title ??
+                              "Unknown role"}
+                          </span>
                           <ArrowRight size={16} aria-hidden="true" />
                         </Link>
-                        {event.newStatus && <ApplicationStatusBadge status={event.newStatus} />}
+                        {event.newStatus && (
+                          <ApplicationStatusBadge status={event.newStatus} />
+                        )}
                       </div>
                       <p className="activity-description">
                         {event.kind.replaceAll("-", " ")} · {event.origin}
                       </p>
-                      <time className="activity-time" dateTime={event.recordedAt.toISOString()}>
+                      <time
+                        className="activity-time"
+                        dateTime={event.recordedAt.toISOString()}
+                      >
                         <Clock3 size={14} aria-hidden="true" />
-                        {event.recordedAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} Asia/Kolkata
+                        {event.recordedAt.toLocaleString("en-IN", {
+                          timeZone: "Asia/Kolkata",
+                        })}{" "}
+                        Asia/Kolkata
                       </time>
                     </article>
                   </li>
                 ))}
               </ul>
               <div className="activity-discovery">
-                <h3><Search size={18} aria-hidden="true" />Recent discovery runs</h3>
-                {!tracking.runs.length && <p className="activity-caption">No discovery runs recorded.</p>}
-                <ul className="activity-run-list" aria-label="Recent discovery runs">
+                <h3>
+                  <Search size={18} aria-hidden="true" />
+                  Recent discovery runs
+                </h3>
+                {!tracking.runs.length && (
+                  <p className="activity-caption">
+                    No discovery runs recorded.
+                  </p>
+                )}
+                <ul
+                  className="activity-run-list"
+                  aria-label="Recent discovery runs"
+                >
                   {tracking.runs.map((run) => (
                     <li key={run.id} className="activity-run">
                       <div className="activity-run-heading">
@@ -217,11 +259,19 @@ export default async function Dashboard() {
                       </div>
                       <p className="activity-caption">{run.day}</p>
                       <p className="activity-run-counts">
-                        <span>Fetched <strong>{run.fetched}</strong></span>
-                        <span>Imported <strong>{run.imported}</strong></span>
-                        <span>Duplicates <strong>{run.duplicates}</strong></span>
+                        <span>
+                          Fetched <strong>{run.fetched}</strong>
+                        </span>
+                        <span>
+                          Imported <strong>{run.imported}</strong>
+                        </span>
+                        <span>
+                          Duplicates <strong>{run.duplicates}</strong>
+                        </span>
                       </p>
-                      {run.error && <p className="activity-run-error">{run.error}</p>}
+                      {run.error && (
+                        <p className="activity-run-error">{run.error}</p>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -230,7 +280,8 @@ export default async function Dashboard() {
           )}
           <div className="activity-footer">
             <Link href="/tracker" className="activity-tracker-link">
-              Open application tracker <ArrowRight size={16} aria-hidden="true" />
+              Open application tracker{" "}
+              <ArrowRight size={16} aria-hidden="true" />
             </Link>
           </div>
         </section>

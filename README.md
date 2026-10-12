@@ -57,6 +57,6 @@ Private files, resumes, environment files, and keys are ignored. Future uploads 
 
 ## Next phase
 
-Phase 2 begins with a proposed PostgreSQL/Prisma database model and relations for user approval before writing a schema. Intake, resume/profile, matching, application preparation/tracking, and background processing remain later work. No exact later phase numbers are assigned by this foundation.
+Phase 2 begins with a proposed PostgreSQL/Prisma database model and relations for user approval before writing a schema. Review the [Phase 2 database proposal](docs/PHASE-2-DATABASE-PROPOSAL.md). Intake, resume/profile, matching, application preparation/tracking, and background processing remain later work. No exact later phase numbers are assigned by this foundation.
 
 Implementation references: [Next.js installation](https://nextjs.org/docs/app/getting-started/installation), [shadcn Tailwind 4](https://ui.shadcn.com/docs/tailwind-v4), [Tailwind directives](https://tailwindcss.com/docs/functions-and-directives).

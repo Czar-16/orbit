@@ -1,3 +1,5 @@
+import { approvedSyntheticDraft } from "../helpers/approved-tailored";
+import { removeGeneratedResume } from "@/lib/generated-resume-storage";
 import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { randomUUID } from "node:crypto";
 import { getDatabase, requireWorkspace } from "@/lib/db";
@@ -21,6 +23,7 @@ if (
   !process.env.DATABASE_URL?.endsWith("/orbit_test")
 )
   throw new Error("Disposable test DB required");
+const generatedKeys: string[] = [];
 let jobId: string;
 let applicationId: string;
 let resumeStorageKey: string | undefined;
@@ -69,6 +72,7 @@ beforeAll(async () => {
   ).id;
 });
 afterAll(async () => {
+  for (const key of generatedKeys) await removeGeneratedResume(key);
   if (resumeStorageKey) await removeResume(resumeStorageKey);
   await getDatabase()?.$disconnect();
 });
@@ -171,6 +175,7 @@ describe("real tracking persistence", () => {
       order: content.order,
       confirmed: true,
     });
+    draft = await approvedSyntheticDraft(await databaseDraft(), generatedKeys);
     await command({
       operation: "status",
       status: "READY_TO_APPLY",
@@ -189,6 +194,7 @@ describe("real tracking persistence", () => {
       confirmed: true,
     });
     expect((await app()).status).toBe("DRAFT_READY");
+    draft = await approvedSyntheticDraft(await databaseDraft(), generatedKeys);
     await command({
       operation: "status",
       status: "READY_TO_APPLY",
@@ -234,6 +240,7 @@ describe("real tracking persistence", () => {
         order: content.order,
         confirmed: true,
       });
+      await approvedSyntheticDraft(await databaseDraft(), generatedKeys);
       await command({
         operation: "status",
         status: "READY_TO_APPLY",
@@ -305,6 +312,7 @@ describe("real tracking persistence", () => {
       order: fresh.order,
       confirmed: true,
     });
+    draft = await approvedSyntheticDraft(await databaseDraft(), generatedKeys);
     await command({
       operation: "status",
       status: "READY_TO_APPLY",

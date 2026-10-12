@@ -21,6 +21,9 @@ enum IntakeMethod {
   PERMITTED_API
 }
 model Workspace {
+  resumeContents ResumeContentVersion[]
+  tailoredResumes TailoredResumeVersion[]
+  resumeArtifacts ResumeArtifact[]
   id String @id @default(uuid()) @db.Uuid
   key String @unique
   timezone String @default("Asia/Kolkata")
@@ -44,6 +47,8 @@ model Workspace {
   followUps FollowUp[]
 }
 model ResumeVersion {
+  contents ResumeContentVersion[]
+  tailored TailoredResumeVersion[]
   drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
   workspaceId String @db.Uuid
@@ -62,6 +67,8 @@ model ResumeVersion {
   @@index([workspaceId, createdAt])
 }
 model ProfileVersion {
+  resumeContents ResumeContentVersion[]
+  tailoredResumes TailoredResumeVersion[]
   processingRuns ProcessingRun[]
   drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
@@ -101,6 +108,7 @@ model Source {
   @@unique([workspaceId, id])
 }
 model Job {
+  tailoredResumes TailoredResumeVersion[]
   application Application?
   drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
@@ -128,6 +136,7 @@ model Job {
   @@index([workspaceId, sourceId])
 }
 model JobRevision {
+  tailoredResumes TailoredResumeVersion[]
   drafts ApplicationDraft[]
   id String @id @default(uuid()) @db.Uuid
   workspaceId String @db.Uuid
@@ -183,6 +192,7 @@ model MatchResult {
 }
 
 model PreferenceVersion {
+  tailoredResumes TailoredResumeVersion[]
   processingRuns ProcessingRun[]
   origin String @default("user")
   drafts ApplicationDraft[]
@@ -290,6 +300,10 @@ model DiscoveryAttempt {
 }
 
 model ApplicationDraft {
+  tailoredResumeVersionId String? @db.Uuid
+  tailoredResume TailoredResumeVersion? @relation("SelectedTailored", fields: [workspaceId, jobId, jobRevisionId, resumeVersionId, profileVersionId, preferenceVersionId, tailoredResumeVersionId], references: [workspaceId, jobId, jobRevisionId, resumeVersionId, profileVersionId, preferenceVersionId, id], onDelete: Restrict, onUpdate: NoAction)
+  originatedTailored TailoredResumeVersion[] @relation("OriginatingDraft")
+  @@unique([workspaceId, jobId, jobRevisionId, resumeVersionId, profileVersionId, preferenceVersionId, id])
   selectedFor Application[]
   id String @id @default(uuid()) @db.Uuid
   workspaceId String @db.Uuid
@@ -406,4 +420,74 @@ model FollowUp {
   @@unique([workspaceId, id])
   @@index([workspaceId, dueAt])
   @@index([workspaceId, applicationId])
+}
+
+model ResumeContentVersion {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  resumeVersionId String @db.Uuid
+  resume ResumeVersion @relation(fields: [workspaceId, resumeVersionId], references: [workspaceId, id], onDelete: Restrict)
+  profileVersionId String @db.Uuid
+  profile ProfileVersion @relation(fields: [workspaceId, profileVersionId], references: [workspaceId, id], onDelete: Restrict)
+  revision Int
+  schemaVersion Int @default(1)
+  structuredSource Json @db.JsonB
+  contentHash String
+  reviewStatus String
+  confirmedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  tailored TailoredResumeVersion[]
+  @@unique([workspaceId, resumeVersionId, revision])
+  @@unique([workspaceId, resumeVersionId, profileVersionId, id])
+}
+model TailoredResumeVersion {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  jobId String @db.Uuid
+  job Job @relation(fields: [workspaceId, jobId], references: [workspaceId, id], onDelete: Restrict)
+  jobRevisionId String @db.Uuid
+  jobRevision JobRevision @relation(fields: [workspaceId, jobId, jobRevisionId], references: [workspaceId, jobId, id], onDelete: Restrict)
+  resumeVersionId String @db.Uuid
+  resume ResumeVersion @relation(fields: [workspaceId, resumeVersionId], references: [workspaceId, id], onDelete: Restrict)
+  profileVersionId String @db.Uuid
+  profile ProfileVersion @relation(fields: [workspaceId, profileVersionId], references: [workspaceId, id], onDelete: Restrict)
+  preferenceVersionId String @db.Uuid
+  preference PreferenceVersion @relation(fields: [workspaceId, preferenceVersionId], references: [workspaceId, id], onDelete: Restrict)
+  resumeContentVersionId String @db.Uuid
+  source ResumeContentVersion @relation(fields: [workspaceId, resumeVersionId, profileVersionId, resumeContentVersionId], references: [workspaceId, resumeVersionId, profileVersionId, id], onDelete: Restrict)
+  originatingDraftId String @db.Uuid
+  originatingDraft ApplicationDraft @relation("OriginatingDraft", fields: [workspaceId, jobId, jobRevisionId, resumeVersionId, profileVersionId, preferenceVersionId, originatingDraftId], references: [workspaceId, jobId, jobRevisionId, resumeVersionId, profileVersionId, preferenceVersionId, id], onDelete: Restrict, onUpdate: NoAction)
+  parentVersionId String? @db.Uuid
+  parent TailoredResumeVersion? @relation("TailoredHistory", fields: [workspaceId, jobId, parentVersionId], references: [workspaceId, jobId, id], onDelete: Restrict, onUpdate: NoAction)
+  children TailoredResumeVersion[] @relation("TailoredHistory")
+  selectedFor ApplicationDraft[] @relation("SelectedTailored")
+  revision Int
+  schemaVersion Int @default(1)
+  content Json @db.JsonB
+  contentHash String
+  generatedAt DateTime @default(now()) @db.Timestamptz(3)
+  approval Json? @db.JsonB
+  approvedAt DateTime? @db.Timestamptz(3)
+  artifacts ResumeArtifact[]
+  @@unique([workspaceId, jobId, revision])
+  @@unique([workspaceId, id])
+  @@unique([workspaceId, jobId, id])
+  @@unique([workspaceId, jobId, jobRevisionId, resumeVersionId, profileVersionId, preferenceVersionId, id])
+}
+model ResumeArtifact {
+  id String @id @default(uuid()) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  tailoredResumeVersionId String @db.Uuid
+  tailoredResume TailoredResumeVersion @relation(fields: [workspaceId, tailoredResumeVersionId], references: [workspaceId, id], onDelete: Restrict)
+  format String
+  storageKey String @unique
+  byteSize Int
+  sha256 String
+  templateVersion String
+  validation Json @db.JsonB
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([workspaceId, tailoredResumeVersionId, format])
 }

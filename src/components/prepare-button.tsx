@@ -36,7 +36,7 @@ export function PrepareButton({
             });
             setResult(response);
             if (response.ok && response.id)
-              router.push(`/queue/${response.id}`);
+              router.push(`/queue/${response.id}${response.sourceReviewRequired ? "/resume" : ""}`);
           } catch {
             setResult({ ok: false, message: "Preparation failed. Try again." });
           } finally {

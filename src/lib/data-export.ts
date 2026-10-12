@@ -18,6 +18,9 @@ export const exportEntities = [
   "outboundLogs",
   "processingRuns",
   "discoveryAttempts",
+  "resumeContents",
+  "tailoredResumes",
+  "resumeArtifacts",
 ] as const;
 export type ExportEntity = (typeof exportEntities)[number];
 export async function exportWorkspace() {
@@ -43,6 +46,9 @@ export async function exportWorkspace() {
         outboundLogs,
         processingRuns,
         discoveryAttempts,
+        resumeContents,
+        tailoredResumes,
+        resumeArtifacts,
       ] = await Promise.all([
         tx.workspace.findMany({ where: { id: workspaceId } }),
         tx.profileVersion.findMany({ where, orderBy: { revision: "asc" } }),
@@ -84,9 +90,31 @@ export async function exportWorkspace() {
         tx.outboundDataLog.findMany({ where }),
         tx.processingRun.findMany({ where }),
         tx.discoveryAttempt.findMany({ where }),
+        tx.resumeContentVersion.findMany({
+          where,
+          orderBy: { createdAt: "asc" },
+        }),
+        tx.tailoredResumeVersion.findMany({
+          where,
+          orderBy: { generatedAt: "asc" },
+        }),
+        tx.resumeArtifact.findMany({
+          where,
+          select: {
+            id: true,
+            workspaceId: true,
+            tailoredResumeVersionId: true,
+            format: true,
+            byteSize: true,
+            sha256: true,
+            templateVersion: true,
+            validation: true,
+            createdAt: true,
+          },
+        }),
       ]);
       return {
-        schemaVersion: 2,
+        schemaVersion: 3,
         generatedAt: new Date().toISOString(),
         timezone: "Asia/Kolkata",
         notice:
@@ -109,6 +137,9 @@ export async function exportWorkspace() {
           outboundLogs,
           processingRuns,
           discoveryAttempts,
+          resumeContents,
+          tailoredResumes,
+          resumeArtifacts,
         },
       };
     },

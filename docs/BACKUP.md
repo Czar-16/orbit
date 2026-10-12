@@ -40,3 +40,14 @@ Switching the live database is a separate deliberate operation: retain the origi
 ## Automated isolated restore acceptance
 
 `npm run test:clean-start` verifies the custom-format pg_dump/pg_restore procedure against a newly migrated disposable database with an empty synthetic workspace. It restores into a second empty database and checks migration/workspace/job counts. It never reads or restores the normal database or private resume files. This establishes command/migration compatibility, not recovery of a real personal-data backup; continue to validate your own backup privately as described above.
+
+## Generated tailored documents
+
+For versions with tailored resumes, copy `private/generated-documents` into the same stopped-app backup as `private/resumes` and `orbit.dump`:
+
+```sh
+cp -a private/generated-documents "$ORBIT_BACKUP_DIR/generated-documents"
+chmod -R go-rwx "$ORBIT_BACKUP_DIR/generated-documents"
+```
+
+A missing generated directory is acceptable only when no ResumeArtifact rows exist. PostgreSQL contains structured sources, immutable tailored versions, selected draft references, validation and exact approval hashes; the matching PDF/DOCX bytes are separate private files. Restore the generated directory into the same local test checkout, preserve 0700/0600 permissions, and verify a known approved download matches its stored hash. Do not edit, regenerate or rename approved files during restore. The JSON/CSV schema-version-3 export contains metadata and content history, not generated file bytes or a restorable backup. Keep the font assets, worker scripts and pinned package lock with the matching app version.

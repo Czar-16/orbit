@@ -1,4 +1,5 @@
 import "server-only";
+import { checkedArtifacts } from "@/lib/tailored-artifacts";
 import { trackDraft } from "@/lib/tracking-service";
 import { z } from "zod";
 import { requireWorkspace } from "@/lib/db";
@@ -160,8 +161,29 @@ export async function prepareDraft(input: unknown) {
       (await tx.preferenceVersion.create({
         data: { workspaceId, revision: 1, values, origin: "defaults" },
       }));
+    let tailoredResumeVersionId: string | null = null;
+    if (
+      latest?.tailoredResumeVersionId &&
+      latest.resumeVersionId === resume.id &&
+      latest.jobRevisionId === revision.id &&
+      latest.profileVersionId === profile.id &&
+      latest.preferenceVersionId === snapshotPreference.id
+    ) {
+      try {
+        await checkedArtifacts(
+          tx,
+          workspaceId,
+          latest.tailoredResumeVersionId,
+          true,
+        );
+        tailoredResumeVersionId = latest.tailoredResumeVersionId;
+      } catch (error) {
+        if (!(error instanceof InputError)) throw error;
+      }
+    }
     const saved = await tx.applicationDraft.create({
       data: {
+        tailoredResumeVersionId,
         workspaceId,
         jobId: job.id,
         jobRevisionId: revision.id,
@@ -258,6 +280,8 @@ export async function reviseDraft(input: unknown) {
     const saved = await tx.applicationDraft.create({
       data: {
         workspaceId,
+        tailoredResumeVersionId:
+          data.operation === "edit" ? draft.tailoredResumeVersionId : null,
         jobId: draft.jobId,
         jobRevisionId: draft.jobRevisionId,
         profileVersionId: draft.profileVersionId,

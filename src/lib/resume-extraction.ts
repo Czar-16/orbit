@@ -8,8 +8,14 @@ export async function extractResumeText(resume: {
   mimeType: string;
 }) {
   const bytes = await readResume(resume.storageKey);
-  if (resume.mimeType === "text/plain")
-    return bytes.toString("utf8").slice(0, 100000);
+  if (resume.mimeType === "text/plain") {
+    const text = bytes.toString("utf8");
+    if (text.length > 100000)
+      throw new InputError(
+        "Extracted text exceeds the review limit. Reconstruct the source manually alongside the original; no text is silently truncated.",
+      );
+    return text;
+  }
   try {
     return await new Promise<string>((resolveText, reject) => {
       const child = spawn(

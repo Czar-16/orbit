@@ -1,4 +1,5 @@
 import "server-only";
+import { checkedArtifacts } from "@/lib/tailored-artifacts";
 import { z } from "zod";
 import {
   Prisma,
@@ -273,6 +274,33 @@ async function readyDraft(
     throw new InputError(
       "Resolve missing answers and draft warnings, then review a draft using the current job, profile and preferences.",
     );
+  if (fullyReviewed) {
+    if (!latest.tailoredResumeVersionId)
+      throw new InputError(
+        "Generate, inspect, approve and select a tailored resume before marking Ready to apply.",
+      );
+    const { version } = await checkedArtifacts(
+      tx,
+      app.workspaceId,
+      latest.tailoredResumeVersionId,
+      true,
+    );
+    const source = await tx.resumeContentVersion.findFirst({
+      where: {
+        workspaceId: app.workspaceId,
+        resumeVersionId: latest.resumeVersionId,
+      },
+      orderBy: { revision: "desc" },
+    });
+    if (
+      !source ||
+      source.reviewStatus !== "confirmed" ||
+      source.id !== version.resumeContentVersionId
+    )
+      throw new InputError(
+        "The reviewed source changed. Generate, approve and select a new tailored version.",
+      );
+  }
 }
 export async function trackingCommand(input: unknown) {
   const parsed = trackingCommandSchema.safeParse(input);

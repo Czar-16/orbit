@@ -117,6 +117,20 @@ export default async function Page({
           its original facts; regenerate to use current versions.
         </p>
       )}
+      <section className="panel mb-4">
+        <h2>Tailored resume</h2>
+        <p>
+          {draft.tailoredResumeVersionId
+            ? "An approved tailored version is pinned to this draft. Open resume review to inspect or download its exact files."
+            : "Tailored resume needs review. Generate, inspect, approve and select PDF/DOCX before marking ready."}
+        </p>
+        <Link
+          className="inline-flex min-h-11 items-center underline"
+          href={`/queue/${draft.id}/resume`}
+        >
+          Review and tailor resume
+        </Link>
+      </section>
       <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <DraftReview
           key={draft.id}

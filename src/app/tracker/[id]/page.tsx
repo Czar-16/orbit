@@ -66,6 +66,14 @@ export default async function Page({
       </div>
       <section className="panel mb-4 space-y-3 [overflow-wrap:anywhere]">
         <ApplicationStatusBadge status={app.status} />
+        {app.status === "READY_TO_APPLY" &&
+          !app.selectedDraft?.tailoredResumeVersionId && (
+            <p className="text-warning">
+              This historical ready record needs tailored-resume review.
+              Generate, inspect, approve and select a resume before finalizing
+              readiness again. Historical submission evidence is preserved.
+            </p>
+          )}
         <p className="flex flex-wrap gap-2 text-sm">
           Company{" "}
           <ProvenanceBadge

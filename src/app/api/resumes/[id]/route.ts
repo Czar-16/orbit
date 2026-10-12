@@ -9,7 +9,12 @@ export async function GET(
 ) {
   if (!localExportRequest(request))
     return new Response("Local same-origin access only", { status: 403 });
-  const parsed = z.object({ id: z.uuid() }).safeParse(await params);
+  const parsed = z
+    .object({ id: z.uuid(), preview: z.enum(["0", "1"]) })
+    .safeParse({
+      ...(await params),
+      preview: new URL(request.url).searchParams.get("preview") ?? "0",
+    });
   if (!parsed.success) return new Response("Resume not found", { status: 404 });
   try {
     const { database, workspaceId } = await requireWorkspace();
@@ -21,9 +26,11 @@ export async function GET(
     return new Response(new Uint8Array(contents), {
       headers: {
         "Content-Type": resume.mimeType,
-        "Content-Disposition": `attachment; filename="${resume.filename.replace(/[^A-Za-z0-9 _.-]/g, "_")}"`,
+        "Content-Disposition": `${parsed.data.preview === "1" ? "inline" : "attachment"}; filename="${resume.filename.replace(/[^A-Za-z0-9 _.-]/g, "_")}"`,
         "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
+        "Cross-Origin-Resource-Policy": "same-origin",
+        "X-Frame-Options": "SAMEORIGIN",
       },
     });
   } catch {
